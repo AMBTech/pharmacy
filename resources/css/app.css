@@ -1,0 +1,139 @@
+@import 'tailwindcss';
+/*@tailwind base;*/
+/*@tailwind components;*/
+/*@tailwind utilities;*/
+
+:root {
+    --font-sans: Inter, 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+@theme {
+    /* Custom color palette */
+    --color-primary-50: #f0f9ff;
+    --color-primary-100: #e0f2fe;
+    --color-primary-200: #bae6fd;
+    --color-primary-300: #7dd3fc;
+    --color-primary-400: #38bdf8;
+    --color-primary-500: #0ea5e9;
+    --color-primary-600: #0284c7;
+    --color-primary-700: #0369a1;
+    --color-primary-800: #075985;
+    --color-primary-900: #0c4a6e;
+
+    --color-success-50: #f0fdf4;
+    --color-success-100: #dcfce7;
+    --color-success-200: #bbf7d0;
+    --color-success-300: #86efac;
+    --color-success-400: #4ade80;
+    --color-success-500: #22c55e;
+    --color-success-600: #16a34a;
+    --color-success-700: #15803d;
+    --color-success-800: #166534;
+    --color-success-900: #14532d;
+
+    --color-warning-50: #fffbeb;
+    --color-warning-100: #fef3c7;
+    --color-warning-200: #fde68a;
+    --color-warning-300: #fcd34d;
+    --color-warning-400: #fbbf24;
+    --color-warning-500: #f59e0b;
+    --color-warning-600: #d97706;
+    --color-warning-700: #b45309;
+    --color-warning-800: #92400e;
+    --color-warning-900: #78350f;
+
+    --color-danger-50: #fef2f2;
+    --color-danger-100: #fee2e2;
+    --color-danger-200: #fecaca;
+    --color-danger-300: #fca5a5;
+    --color-danger-400: #f87171;
+    --color-danger-500: #ef4444;
+    --color-danger-600: #dc2626;
+    --color-danger-700: #b91c1c;
+    --color-danger-800: #991b1b;
+    --color-danger-900: #7f1d1d;
+
+    /* Custom spacing */
+    --spacing-18: 4.5rem;
+    --spacing-88: 22rem;
+
+    /* Custom border radius */
+    --radius-4xl: 2rem;
+}
+
+/* Custom background opacity utilities */
+@layer utilities {
+    .bg-opacity-10 {
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+    .bg-opacity-20 {
+        background-color: rgba(0, 0, 0, 0.2);
+    }
+    .bg-opacity-30 {
+        background-color: rgba(0, 0, 0, 0.3);
+    }
+    .bg-opacity-40 {
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+    .bg-opacity-50 {
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+    .bg-opacity-60 {
+        background-color: rgba(0, 0, 0, 0.6);
+    }
+    .bg-opacity-70 {
+        background-color: rgba(0, 0, 0, 0.7);
+    }
+    .bg-opacity-75 {
+        background-color: rgba(0, 0, 0, 0.75);
+    }
+    .bg-opacity-80 {
+        background-color: rgba(0, 0, 0, 0.8);
+    }
+    .bg-opacity-90 {
+        background-color: rgba(0, 0, 0, 0.9);
+    }
+    .bg-opacity-95 {
+        background-color: rgba(0, 0, 0, 0.95);
+    }
+}
+
+/* apply variable if desired */
+html { font-family: var(--font-sans); }
+
+/* Custom styles for flex column buttons */
+.btn-flex-col {
+    flex-direction: column;
+    height: 6rem;
+}
+
+.btn-flex-col i {
+    margin-bottom: 0.5rem;
+    margin-right: 0;
+}
+
+.btn-flex-col span {
+    margin-top: 0.25rem;
+}
+
+.text-dark {
+    color: #1b1b18;
+}
+
+.bg-primary-600 {
+    background-color: #16a34a;
+}
+
+.bg-gradient-to-br {
+    background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
+
+.from-primary-500 {
+    --tw-gradient-from: #22c55e;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(34, 197, 94, 0));
+}
+
+.to-primary-600 {
+    --tw-gradient-to: #16a34a;
+}
