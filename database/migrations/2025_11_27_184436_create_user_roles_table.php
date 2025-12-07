@@ -27,7 +27,7 @@ return new class extends Migration
             [
                 'name' => 'admin',
                 'display_name' => 'Administrator',
-                'description' => 'Full system access',
+                'description' => 'Full system access with all permissions',
                 'is_system' => true,
                 'permissions' => json_encode(['*']),
                 'created_at' => now(),
@@ -36,12 +36,17 @@ return new class extends Migration
             [
                 'name' => 'manager',
                 'display_name' => 'Manager',
-                'description' => 'Manage products, categories, and view reports',
+                'description' => 'Manage inventory, purchases, and view reports',
                 'is_system' => true,
                 'permissions' => json_encode([
-                    'products.view', 'products.create', 'products.edit', 'products.delete',
+                    'dashboard.view',
+                    'purchases.view', 'purchases.create', 'purchases.edit', 'purchases.delete',
+                    'suppliers.view', 'suppliers.create', 'suppliers.edit', 'suppliers.delete',
+                    'inventory.view', 'inventory.create', 'inventory.edit', 'inventory.delete',
                     'categories.view', 'categories.create', 'categories.edit', 'categories.delete',
-                    'sales.view', 'reports.view', 'settings.view'
+                    'sales.view',
+                    'reports.view',
+                    'settings.view'
                 ]),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -52,7 +57,12 @@ return new class extends Migration
                 'description' => 'Process sales and view products',
                 'is_system' => true,
                 'permissions' => json_encode([
-                    'products.view', 'sales.create', 'sales.view'
+                    'dashboard.view',
+                    'pos.view',
+                    'inventory.view',
+                    'categories.view',
+                    'sales.view',
+                    'sales.create'
                 ]),
                 'created_at' => now(),
                 'updated_at' => now(),

@@ -87,7 +87,7 @@
 
                         <div>
                             <label for="price" class="block text-sm font-medium text-gray-700 mb-1">
-                                Selling Price (Rs.) *
+                                Selling Price ({{ $currency_symbol }}) *
                             </label>
                             <input type="number"
                                    name="price"

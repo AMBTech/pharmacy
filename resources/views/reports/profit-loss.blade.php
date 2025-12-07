@@ -36,7 +36,7 @@
                                 <input type="hidden" name="start_date" value="{{ $startDate }}">
                                 <input type="hidden" name="end_date" value="{{ $endDate }}">
                                 <button type="submit" class="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                    <x-ui.icon name="pdf" class="w-3 h-3 mr-3"></x-ui.icon>
+                                    <x-ui.icon name="csv" class="w-3 h-3 mr-3"></x-ui.icon>
                                     Export as CSV
                                 </button>
                             </form>
@@ -235,6 +235,7 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <script>
+        const CURRENCY_SYMBOL = '{{$currency_symbol}}';
         // Revenue & Expenses Trend Chart
         const revenueExpensesCtx = document.getElementById('revenueExpensesChart').getContext('2d');
         const revenueExpensesChart = new Chart(revenueExpensesCtx, {
@@ -301,7 +302,7 @@
                         },
                         callbacks: {
                             label: function(context) {
-                                return context.dataset.label + ': Rs. ' + context.parsed.y.toLocaleString('en-PK', {minimumFractionDigits: 2});
+                                return context.dataset.label + `: ${CURRENCY_SYMBOL} ` + context.parsed.y.toLocaleString('en-PK', {minimumFractionDigits: 2});
                             }
                         }
                     }
@@ -314,7 +315,7 @@
                         },
                         ticks: {
                             callback: function(value) {
-                                return 'Rs. ' + value.toLocaleString();
+                                return `${CURRENCY_SYMBOL} ` + value.toLocaleString();
                             }
                         }
                     },
@@ -361,7 +362,7 @@
                         padding: 12,
                         callbacks: {
                             label: function(context) {
-                                return 'Profit: Rs. ' + context.parsed.y.toLocaleString('en-PK', {minimumFractionDigits: 2});
+                                return `Profit: ${CURRENCY_SYMBOL} ` + context.parsed.y.toLocaleString('en-PK', {minimumFractionDigits: 2});
                             }
                         }
                     }
@@ -374,7 +375,7 @@
                         },
                         ticks: {
                             callback: function(value) {
-                                return 'Rs. ' + value.toLocaleString();
+                                return `${CURRENCY_SYMBOL} ` + value.toLocaleString();
                             }
                         }
                     },

@@ -66,5 +66,6 @@ class Kernel extends HttpKernel
 
         // Custom middleware for permissions
         'permission' => \App\Http\Middleware\CheckPermission::class,
+        'check.permission' => \App\Http\Middleware\CheckRole::class,
     ];
 }

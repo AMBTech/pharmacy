@@ -27,7 +27,7 @@
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Today's Sales</p>
-                        <p class="text-2xl font-bold text-gray-900">Rs. {{ number_format($todaySales, 2) }}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ $currency_symbol }} {{ number_format($todaySales, 2) }}</p>
                     </div>
                 </div>
             </x-ui.card>
@@ -39,7 +39,7 @@
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">This Month</p>
-                        <p class="text-2xl font-bold text-gray-900">Rs. {{ number_format($monthSales, 2) }}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ $currency_symbol }} {{ number_format($monthSales, 2) }}</p>
                     </div>
                 </div>
             </x-ui.card>
@@ -97,12 +97,14 @@
 
                 <!-- Filter Actions -->
                 <div class="md:col-span-4 flex justify-between items-center pt-4 border-t border-gray-200">
-                    <a href="{{ route('reports.sales-by-cashier') }}"
-                       class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                        <i class="lni lni-bar-chart mr-2"></i>
-                        Sales by Cashier Report
-                    </a>
-                    <div class="flex space-x-3">
+                    @hasPermission('reports.view')
+                        <a href="{{ route('reports.sales-by-cashier') }}"
+                        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="lni lni-bar-chart mr-2"></i>
+                            Sales by Cashier Report
+                        </a>
+                    @endhasPermission
+                    <div class="flex space-x-3 ml-auto">
                         <a href="{{ route('sales.index') }}"
                            class="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors">
                             Clear
@@ -195,7 +197,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <a href="{{ route('sales.print', $sale) }}" target="_blank"
                                        class="text-green-600 hover:text-green-900 flex items-center text-sm font-bold">
-                                        <i class="lni lni-download mr-1"></i> Download
+                                        <i class="lni lni-eye mr-1"></i> View
                                     </a>
                                 </td>
                             </tr>

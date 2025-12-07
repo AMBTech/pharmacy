@@ -51,13 +51,16 @@ class InventoryController extends Controller
 
         $categories = Category::active()->ordered()->get();
 
+        $currency_symbol = get_currency_symbol();
 
-        return view('inventory.index', compact('products', 'categories'));
+
+        return view('inventory.index', compact('products', 'categories', 'currency_symbol'));
     }
 
     public function create()
     {
-        return view('inventory.create');
+        $currency_symbol = get_currency_symbol();
+        return view('inventory.create', compact('currency_symbol'));
     }
 
     public function store(Request $request)
@@ -85,15 +88,17 @@ class InventoryController extends Controller
 
     public function batchManagement(Product $product)
     {
+        $currency_symbol = get_currency_symbol();
         $product->load('batches');
-        return view('inventory.partials.batch-management', compact('product'));
+        return view('inventory.partials.batch-management', compact('product', 'currency_symbol'));
     }
 
     public function edit(Product $product)
     {
+        $currency_symbol = get_currency_symbol();
         $product->load(['batches', 'activeBatches']);
 
-        return view('inventory.edit', compact('product'));
+        return view('inventory.edit', compact('product', 'currency_symbol'));
     }
 
 
@@ -169,5 +174,10 @@ class InventoryController extends Controller
         ]);
 
         return back()->with('success', 'Batch deleted successfully!');
+    }
+
+    public function getBatchesJson($product)
+    {
+        return ProductBatch::query()->where('product_id', $product)->get();
     }
 }

@@ -19,11 +19,13 @@
                     <i class="lni lni-arrow-left mr-2"></i>
                     All Categories
                 </a>
-                <a href="{{ route('categories.edit', $category) }}"
-                   class="bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors flex items-center">
-                    <i class="lni lni-pencil mr-2"></i>
-                    Edit Category
-                </a>
+                @hasPermission('categories.edit')
+                    <a href="{{ route('categories.edit', $category) }}"
+                       class="bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors flex items-center">
+                        <i class="lni lni-pencil mr-2"></i>
+                        Edit Category
+                    </a>
+                @endhasPermission
             </div>
         </div>
 
@@ -203,11 +205,13 @@
                     <h3 class="text-lg font-semibold text-gray-900">Products ({{ $products->total() }})</h3>
                     <p class="text-gray-600 mt-1">All products belonging to this category</p>
                 </div>
-                <a href="{{ route('inventory.create') }}?category_id={{ $category->id }}"
-                   class="bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors flex items-center">
-                    <i class="lni lni-plus mr-2"></i>
-                    Add Product
-                </a>
+                @hasPermission('inventory.create')
+                    <a href="{{ route('inventory.create') }}?category_id={{ $category->id }}"
+                       class="bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors flex items-center">
+                        <i class="lni lni-plus mr-2"></i>
+                        Add Product
+                    </a>
+                @endhasPermission
             </div>
 
             @if($products->count() > 0)
@@ -283,14 +287,18 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end space-x-2">
-                                        <a href="{{ route('inventory.edit', $product) }}"
-                                           class="text-primary-600 hover:text-primary-900 flex items-center text-sm">
-                                            <i class="lni lni-pencil mr-1"></i> Edit
-                                        </a>
-                                        <button onclick="openBatchModal({{ $product->id }})"
-                                                class="text-blue-600 hover:text-blue-900 flex items-center text-sm">
-                                            <i class="lni lni-eye mr-1"></i> Batches
-                                        </button>
+                                        @hasPermission('inventory.edit')
+                                            <a href="{{ route('inventory.edit', $product) }}"
+                                               class="text-primary-600 hover:text-primary-900 flex items-center text-sm">
+                                                <i class="lni lni-pencil mr-1"></i> Edit
+                                            </a>
+                                        @endhasPermission
+                                        @hasPermission('batches.view')
+                                            <a href="{{route('inventory.batches.manage', compact('product'))}}"
+                                                    class="text-blue-600 hover:text-blue-900 flex items-center text-sm">
+                                                <i class="lni lni-eye mr-1"></i> Batches
+                                            </a>
+                                        @endhasPermission
                                     </div>
                                 </td>
                             </tr>
@@ -321,54 +329,4 @@
         </x-ui.card>
     </div>
 
-    <!-- Batch Management Modal (Reuse from inventory) -->
-    <div id="batchModal" class="fixed inset-0 bg-gray-600/50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-lg bg-white">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-semibold text-gray-900">Batch Management</h3>
-                <button onclick="closeBatchModal()" class="text-gray-400 hover:text-gray-600">
-                    <i class="lni lni-close text-2xl"></i>
-                </button>
-            </div>
-
-            <div id="batchModalContent">
-                <!-- Content will be loaded via AJAX -->
-            </div>
-        </div>
-    </div>
 @endsection
-
-@push('scripts')
-    <script>
-        function openBatchModal(productId) {
-            fetch(`/inventory/${productId}/batches`)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById('batchModalContent').innerHTML = html;
-                    document.getElementById('batchModal').classList.remove('hidden');
-                    document.body.style.overflow = 'hidden';
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    document.getElementById('batchModalContent').innerHTML = `
-                <div class="text-center py-8">
-                    <i class="lni lni-exclamation-circle text-4xl text-red-300 mb-2"></i>
-                    <p class="text-red-500">Error loading batch data. Please try again.</p>
-                </div>
-            `;
-                });
-        }
-
-        function closeBatchModal() {
-            document.getElementById('batchModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
-        // Close modal when clicking outside
-        document.getElementById('batchModal').addEventListener('click', function(e) {
-            if (e.target.id === 'batchModal') {
-                closeBatchModal();
-            }
-        });
-    </script>
-@endpush

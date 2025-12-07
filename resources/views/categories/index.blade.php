@@ -8,11 +8,37 @@
                 <h1 class="text-3xl font-bold text-gray-900">Product Categories</h1>
                 <p class="text-gray-600 mt-1">Manage product categories and organization</p>
             </div>
-            <a href="{{ route('categories.create') }}"
-               class="bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors flex items-center">
-                <i class="lni lni-plus mr-2"></i>
-                Add New Category
-            </a>
+            @hasPermission('categories.create')
+                <a href="{{ route('categories.create') }}"
+                   class="bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors flex items-center">
+                    <i class="lni lni-plus mr-2"></i>
+                    Add New Category
+                </a>
+            @endhasPermission
+        </div>
+
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
+            <x-ui.card class="text-center">
+                <p class="text-2xl font-bold text-gray-900">{{ $categories->count() }}</p>
+                <p class="text-sm text-gray-600">Total Categories</p>
+            </x-ui.card>
+
+            <x-ui.card class="text-center">
+                <p class="text-2xl font-bold text-gray-900">{{ $categories->where('is_active', true)->count() }}</p>
+                <p class="text-sm text-gray-600">Active Categories</p>
+            </x-ui.card>
+
+            <x-ui.card class="text-center">
+                <p class="text-2xl font-bold text-gray-900">{{ $categories->sum('products_count') }}</p>
+                <p class="text-sm text-gray-600">Total Products</p>
+            </x-ui.card>
+
+            <x-ui.card class="text-center">
+                <p class="text-2xl font-bold text-gray-900">{{ $categories->sum('active_products_count') }}</p>
+                <p class="text-sm text-gray-600">Active Products</p>
+            </x-ui.card>
         </div>
 
         <!-- Categories Grid -->
@@ -61,22 +87,26 @@
                                 <i class="lni lni-eye mr-1"></i> View Products
                             </a>
                             <div class="flex items-center space-x-2">
-                                <a href="{{ route('categories.edit', $category) }}"
-                                   class="text-gray-600 hover:text-gray-700 p-1 rounded hover:bg-gray-100">
-                                    <i class="lni lni-pencil"></i>
-                                </a>
-                                <form action="{{ route('categories.destroy', $category) }}"
-                                      method="POST"
-                                      onsubmit="return confirm('Are you sure you want to delete this category?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit"
-                                            class="text-red-600 hover:text-red-700 p-1 rounded hover:bg-red-50
-                                           {{ $category->products_count > 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
-                                        {{ $category->products_count > 0 ? 'disabled' : '' }}>
-                                        <i class="lni lni-trash-can"></i>
-                                    </button>
-                                </form>
+                                @hasPermission('categories.edit')
+                                    <a href="{{ route('categories.edit', $category) }}"
+                                       class="text-gray-600 hover:text-gray-700 p-1 rounded hover:bg-gray-100">
+                                        <i class="lni lni-pencil"></i>
+                                    </a>
+                                @endhasPermission
+                                @hasPermission('categories.destroy')
+                                    <form action="{{ route('categories.destroy', $category) }}"
+                                          method="POST"
+                                          onsubmit="return confirm('Are you sure you want to delete this category?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                                class="text-red-600 hover:text-red-700 p-1 rounded hover:bg-red-50
+                                               {{ $category->products_count > 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
+                                            {{ $category->products_count > 0 ? 'disabled' : '' }}>
+                                            <i class="lni lni-trash-can"></i>
+                                        </button>
+                                    </form>
+                                @endhasPermission
                             </div>
                         </div>
                     </div>
@@ -97,27 +127,5 @@
             @endforelse
         </div>
 
-        <!-- Quick Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
-            <x-ui.card class="text-center">
-                <p class="text-2xl font-bold text-gray-900">{{ $categories->count() }}</p>
-                <p class="text-sm text-gray-600">Total Categories</p>
-            </x-ui.card>
-
-            <x-ui.card class="text-center">
-                <p class="text-2xl font-bold text-gray-900">{{ $categories->where('is_active', true)->count() }}</p>
-                <p class="text-sm text-gray-600">Active Categories</p>
-            </x-ui.card>
-
-            <x-ui.card class="text-center">
-                <p class="text-2xl font-bold text-gray-900">{{ $categories->sum('products_count') }}</p>
-                <p class="text-sm text-gray-600">Total Products</p>
-            </x-ui.card>
-
-            <x-ui.card class="text-center">
-                <p class="text-2xl font-bold text-gray-900">{{ $categories->sum('active_products_count') }}</p>
-                <p class="text-sm text-gray-600">Active Products</p>
-            </x-ui.card>
-        </div>
     </div>
 @endsection

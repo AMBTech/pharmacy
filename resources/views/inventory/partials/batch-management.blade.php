@@ -60,22 +60,22 @@
                     </div>
 
                     <div>
-                        <label for="cost_price" class="block text-sm font-medium text-gray-700 mb-1">Cost Price (Rs.) *</label>
+                        <label for="cost_price" class="block text-sm font-medium text-gray-700 mb-1">Cost Price ({{ $currency_symbol }}) *</label>
                         <input type="number" name="cost_price" id="cost_price" required step="0.01" min="0"
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
 
                     <div>
-                        <label for="selling_price" class="block text-sm font-medium text-gray-700 mb-1">Selling Price (Rs.) *</label>
+                        <label for="selling_price" class="block text-sm font-medium text-gray-700 mb-1">Selling Price ({{ $currency_symbol }}) *</label>
                         <input type="number" name="selling_price" id="selling_price" required step="0.01" min="0"
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
 
                     <div class="md:col-span-2 flex justify-end space-x-3 pt-4">
-                        <button type="button" onclick="closeBatchModal()"
+                        <a href="{{route('inventory.index')}}"
                                 class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors">
                             Cancel
-                        </button>
+                        </a>
                         <button type="submit"
                                 class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
                             Add Batch
@@ -109,8 +109,8 @@
                                     <td class="px-4 py-3 text-sm text-gray-500">{{ $batch->manufacturing_date->format('M d, Y') }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-500">{{ $batch->expiry_date->format('M d, Y') }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-900">{{ $batch->quantity }} {{ $product->unit }}</td>
-                                    <td class="px-4 py-3 text-sm text-gray-900">Rs. {{ number_format($batch->cost_price, 2) }}</td>
-                                    <td class="px-4 py-3 text-sm text-gray-900">Rs. {{ number_format($batch->selling_price, 2) }}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-900">{{ $currency_symbol }} {{ number_format($batch->cost_price, 2) }}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-900">{{ $currency_symbol }} {{ number_format($batch->selling_price, 2) }}</td>
                                     <td class="px-4 py-3">
                                         @php
                                             $daysToExpiry = $batch->getDaysToExpiryAttribute();
@@ -130,16 +130,18 @@
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-right text-sm font-medium">
-                                        <form action="{{ route('inventory.batches.destroy', $batch) }}"
-                                              method="POST"
-                                              class="inline"
-                                              onsubmit="return confirm('Are you sure you want to delete this batch?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-900">
-                                                <i class="lni lni-trash-can"></i>
-                                            </button>
-                                        </form>
+                                        @canPermission('batches.delete')
+                                            <form action="{{ route('inventory.batches.destroy', $batch) }}"
+                                                  method="POST"
+                                                  class="inline"
+                                                  onsubmit="return confirm('Are you sure you want to delete this batch?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:text-red-900">
+                                                    <i class="lni lni-trash-can"></i>
+                                                </button>
+                                            </form>
+                                        @endcanPermission
                                     </td>
                                 </tr>
                             @endforeach
@@ -184,7 +186,7 @@
                     showNotification('Please fill in all required fields.', 'error');
                     return;
                 }
-                
+
                 // Submit the form
                 document.querySelector('form').submit();
                 showNotification('Batch added successfully!', 'success');

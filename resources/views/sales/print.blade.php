@@ -1,3 +1,30 @@
+@php
+    // $items is assumed to be an array or collection of sale item arrays/objects
+    $itemsCollection = collect($sale->items);
+
+    $aggregated = $itemsCollection
+        ->groupBy(function($item) {
+            $unitPrice = isset($item['unit_price']) ? (float)$item['unit_price'] : (float)$item->unit_price;
+            $productId = isset($item['product_id']) ? $item['product_id'] : $item->product_id;
+            return $productId . '|' . number_format($unitPrice, 2, '.', '');
+        })
+        ->map(function($group) {
+            $first = $group->first();
+            $totalQty = $group->sum(fn($i) => (int) (is_array($i) ? $i['quantity'] : $i->quantity));
+            $totalPrice = $group->sum(fn($i) => (float) (is_array($i) ? $i['total_price'] : $i->total_price));
+            return [
+                'product_id' => is_array($first) ? $first['product_id'] : $first->product_id,
+                'product_name' => is_array($first) ? $first['product_name'] : $first->product_name,
+                'unit_price' => number_format((float)(is_array($first) ? $first['unit_price'] : $first->unit_price), 2, '.', ''),
+                'quantity' => $totalQty,
+                'total_price' => number_format($totalPrice, 2, '.', ''),
+                'batch_number' => $first->batch->batch_number ?? ''
+            ];
+        })
+        ->values()
+        ->all();
+@endphp
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -79,11 +106,16 @@
         }
 
         .line-items .item-name {
-            width: 60%;
+            width: 40%;
         }
 
         .line-items .item-qty {
             width: 10%;
+            text-align: center;
+        }
+
+        .line-items .item-unitPrice {
+            width: 15%;
             text-align: center;
         }
 
@@ -180,9 +212,10 @@
 
 <!-- Receipt Content -->
 <div class="header">
-    <div class="business-name">PHARMACARE PHARMACY</div>
-    <div class="business-address">123 Medical Street, Health City</div>
-    <div class="business-contact">Tel: (555) 123-4567 | License: PH-12345</div>
+    <div class="business-name">{{$settings['company_name']}}</div>
+    <img src="{{ asset('images/clinic-logo.png') }}" alt="company logo" style="width: 70px; height: auto;">
+    <div class="business-address">{{$settings['company_address']}}</div>
+    <div class="business-contact">Tel: {{$settings['company_phone']}} {{$settings['license_number'] ? '| License:' . $settings['license_number'] : ''}}</div>
 </div>
 
 <!-- Invoice Information -->
@@ -208,22 +241,24 @@
     <tr>
         <th class="item-name">ITEM</th>
         <th class="item-qty">QTY</th>
+        <th class="item-unitPrice">Price</th>
         <th class="item-price">AMOUNT</th>
     </tr>
     </thead>
     <tbody>
-    @foreach($sale->items as $item)
+    @foreach($aggregated as $item)
         <tr>
             <td class="item-name">
-                {{ $item->product_name }}<br>
+                {{ $item['product_name'] }}<br>
                 <small style="font-size: 9px;">
-                    @if($item->batch)
-                        Batch: {{ $item->batch->batch_number }}
+                    @if($item['batch_number'])
+                        Batch: {{ $item['batch_number'] }}
                     @endif
                 </small>
             </td>
-            <td class="item-qty">{{ $item->quantity }}</td>
-            <td class="item-price">Rs. {{ number_format($item->total_price, 2) }}</td>
+            <td class="item-qty">{{ $item['quantity'] }}</td>
+            <td class="item-unitPrice">{{ $item['unit_price'] }}</td>
+            <td class="item-price">{{ number_format($item['total_price'], 2) }}</td>
         </tr>
     @endforeach
     </tbody>
@@ -233,21 +268,21 @@
 <table class="totals">
     <tr>
         <td class="label">Subtotal:</td>
-        <td class="amount">Rs. {{ number_format($sale->subtotal, 2) }}</td>
+        <td class="amount">{{$currency_symbol}} {{ number_format($sale->subtotal, 2) }}</td>
     </tr>
     <tr>
         <td class="label">Tax (8%):</td>
-        <td class="amount">Rs. {{ number_format($sale->tax_amount, 2) }}</td>
+        <td class="amount">{{$currency_symbol}} {{ number_format($sale->tax_amount, 2) }}</td>
     </tr>
     @if($sale->discount_amount > 0)
         <tr>
             <td class="label">Discount:</td>
-            <td class="amount" style="color: #dc3545;">- Rs. {{ number_format($sale->discount_amount, 2) }}</td>
+            <td class="amount" style="color: #dc3545;">- {{$currency_symbol}} {{ number_format($sale->discount_amount, 2) }}</td>
         </tr>
     @endif
     <tr class="grand-total">
         <td class="label">TOTAL:</td>
-        <td class="amount">Rs. {{ number_format($sale->total_amount, 2) }}</td>
+        <td class="amount">{{$currency_symbol}} {{ number_format($sale->total_amount, 2) }}</td>
     </tr>
     <tr>
         <td class="label">Payment:</td>

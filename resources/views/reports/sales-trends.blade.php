@@ -36,7 +36,7 @@
                                 <input type="hidden" name="period" value="{{ $period }}">
                                 <input type="hidden" name="days" value="{{ $days }}">
                                 <button type="submit" class="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                    <x-ui.icon name="pdf" class="w-3 h-3 mr-3"></x-ui.icon>
+                                    <x-ui.icon name="csv" class="w-3 h-3 mr-3"></x-ui.icon>
                                     Export as CSV
                                 </button>
                             </form>
@@ -143,6 +143,7 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <script>
+        const CURRENCY_SYMBOL = '{{ $currency_symbol }}';
         // Revenue Trend Chart with gradient
         const revenueCtx = document.getElementById('revenueChart').getContext('2d');
         const revenueGradient = revenueCtx.createLinearGradient(0, 0, 0, 400);
@@ -154,7 +155,7 @@
             data: {
                 labels: {!! json_encode($salesData->pluck('date')->map(function($date) { return date('M d', strtotime($date)); })) !!},
                 datasets: [{
-                    label: 'Revenue (Rs.)',
+                    label: `Revenue (${CURRENCY_SYMBOL})`,
                     data: {!! json_encode($salesData->pluck('revenue')) !!},
                     borderColor: '#3b82f6',
                     backgroundColor: revenueGradient,
@@ -206,7 +207,7 @@
                         displayColors: true,
                         callbacks: {
                             label: function(context) {
-                                return 'Revenue: Rs. ' + context.parsed.y.toLocaleString('en-PK', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                return `Revenue: ${CURRENCY_SYMBOL} ` + context.parsed.y.toLocaleString('en-PK', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                             }
                         }
                     }
@@ -223,7 +224,7 @@
                                 size: 12
                             },
                             callback: function(value) {
-                                return 'Rs. ' + value.toLocaleString();
+                                return `${CURRENCY_SYMBOL} ` + value.toLocaleString();
                             },
                             padding: 10
                         }
@@ -296,9 +297,9 @@
                             label: function(context) {
                                 const label = context.label || '';
                                 const value = context.parsed || 0;
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const total = context.dataset.data.reduce((a, b) => parseFloat(a) + parseFloat(b), 0);
                                 const percentage = ((value / total) * 100).toFixed(1);
-                                return label + ': Rs. ' + value.toLocaleString('en-PK', {minimumFractionDigits: 2}) + ' (' + percentage + '%)';
+                                return label + `: ${CURRENCY_SYMBOL} ` + value.toLocaleString('en-PK', {minimumFractionDigits: 2}) + ' (' + percentage + '%)';
                             }
                         }
                     }

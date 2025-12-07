@@ -1,59 +1,4 @@
-{{--<x-guest-layout>--}}
-{{--    <!-- Session Status -->--}}
-{{--    <x-auth-session-status class="mb-4" :status="session('status')"/>--}}
-
-{{--    <form method="POST" action="{{ route('login') }}">--}}
-{{--    @csrf--}}
-
-{{--    <!-- Email Address -->--}}
-{{--        <div>--}}
-{{--            <x-input-label for="email" :value="__('Email')"/>--}}
-{{--            <input id="email"--}}
-{{--                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"--}}
-{{--                   type="email" name="email" :value="old('email')" required--}}
-{{--                   autofocus autocomplete="username"/>--}}
-{{--            <x-input-error :messages="$errors->get('email')" class="mt-2"/>--}}
-{{--        </div>--}}
-
-{{--        <!-- Password -->--}}
-{{--        <div class="mt-4">--}}
-{{--            <x-input-label for="password" :value="__('Password')"/>--}}
-
-{{--            <input id="password"--}}
-{{--                   type="password"--}}
-{{--                   name="password"--}}
-{{--                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"--}}
-{{--                   required autocomplete="current-password"/>--}}
-
-{{--            <x-input-error :messages="$errors->get('password')" class="mt-2"/>--}}
-{{--        </div>--}}
-
-{{--        <!-- Remember Me -->--}}
-{{--        <div class="block mt-4">--}}
-{{--            <label for="remember_me" class="inline-flex items-center">--}}
-{{--                <input id="remember_me" type="checkbox"--}}
-{{--                       class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">--}}
-{{--                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>--}}
-{{--            </label>--}}
-{{--        </div>--}}
-
-{{--        <div class="flex items-center justify-end mt-4">--}}
-{{--            @if (Route::has('password.request'))--}}
-{{--                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"--}}
-{{--                   href="{{ route('password.request') }}">--}}
-{{--                    {{ __('Forgot your password?') }}--}}
-{{--                </a>--}}
-{{--            @endif--}}
-
-{{--            <x-primary-button class="ms-3">--}}
-{{--                {{ __('Log in') }}--}}
-{{--            </x-primary-button>--}}
-{{--        </div>--}}
-{{--    </form>--}}
-{{--</x-guest-layout>--}}
-
-
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -234,12 +179,12 @@
                             <span class="ms-2 text-sm text-gray-600">Remember me</span>
                         </label>
 
-                        @if (Route::has('password.request'))
+                        {{--@if (Route::has('password.request'))
                             <a href="{{ route('password.request') }}"
                                class="text-sm text-primary-600 hover:text-primary-700 font-medium">
                                 Forgot password?
                             </a>
-                        @endif
+                        @endif--}}
                     </div>
 
                     <!-- Submit Button -->
@@ -261,12 +206,12 @@
                 </form>
 
                 <!-- Footer Links -->
-                <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+                {{--<div class="mt-8 pt-6 border-t border-gray-200 text-center">
                     <p class="text-sm text-gray-600">
                         Need help? <a href="#" class="text-primary-600 hover:text-primary-700 font-medium">Contact
                             support</a>
                     </p>
-                </div>
+                </div>--}}
             </div>
         </div>
     </div>

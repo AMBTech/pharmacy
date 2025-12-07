@@ -85,7 +85,7 @@
 
                         <div>
                             <label for="price" class="block text-sm font-medium text-gray-700 mb-1">
-                                Selling Price (Rs.) *
+                                Selling Price ({{ $currency_symbol }}) *
                             </label>
                             <input type="number"
                                    name="price"
@@ -256,10 +256,10 @@
                                         {{ $batch->quantity }} {{ $product->unit }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        Rs. {{ number_format($batch->cost_price, 2) }}
+                                        {{ $currency_symbol }} {{ number_format($batch->cost_price, 2) }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        Rs. {{ number_format($batch->selling_price, 2) }}
+                                        {{ $currency_symbol }} {{ number_format($batch->selling_price, 2) }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @php
@@ -372,7 +372,7 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label for="cost_price" class="block text-sm font-medium text-gray-700 mb-1">
-                                Cost Price (Rs.) *
+                                Cost Price ({{ $currency_symbol }}) *
                             </label>
                             <input type="number"
                                    name="cost_price"
@@ -385,7 +385,7 @@
 
                         <div>
                             <label for="selling_price" class="block text-sm font-medium text-gray-700 mb-1">
-                                Selling Price (Rs.) *
+                                Selling Price ({{ $currency_symbol }}) *
                             </label>
                             <input type="number"
                                    name="selling_price"

@@ -24,8 +24,9 @@ class PointOfSaleController extends Controller
 
         $settings = SystemSetting::getSettings();
         $settings['currency'] = format_currency($settings['currency']);
+        $currency_symbol = get_currency_symbol();
 
-        return view('pos.index', compact('products', 'settings'));
+        return view('pos.index', compact('products', 'settings', 'currency_symbol'));
     }
 
     public function searchProducts(Request $request)

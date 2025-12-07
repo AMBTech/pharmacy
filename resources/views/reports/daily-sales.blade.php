@@ -250,6 +250,7 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <script>
+        const CURRENCY_SYMBOL = '{{$currency_symbol}}';
         // Hourly Sales Chart
         const hourlySalesCtx = document.getElementById('hourlySalesChart').getContext('2d');
 
@@ -270,7 +271,7 @@
             data: {
                 labels: hours.map(h => h.toString().padStart(2, '0') + ':00'),
                 datasets: [{
-                    label: 'Revenue (Rs.)',
+                    label: `Revenue (${CURRENCY_SYMBOL})`,
                     data: chartData,
                     backgroundColor: 'rgba(59, 130, 246, 0.5)',
                     borderColor: 'rgb(59, 130, 246)',
@@ -301,7 +302,7 @@
                         position: 'left',
                         title: {
                             display: true,
-                            text: 'Revenue (Rs.)'
+                            text: `Revenue (${CURRENCY_SYMBOL})`
                         }
                     },
                     y1: {
@@ -329,7 +330,7 @@
                                     label += ': ';
                                 }
                                 if (context.dataset.yAxisID === 'y') {
-                                    label += 'Rs. ' + context.parsed.y.toLocaleString();
+                                    label += `${CURRENCY_SYMBOL} ` + context.parsed.y.toLocaleString();
                                 } else {
                                     label += context.parsed.y;
                                 }

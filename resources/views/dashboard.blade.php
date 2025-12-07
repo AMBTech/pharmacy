@@ -20,15 +20,16 @@
             <x-ui.card class="border-l-4 border-l-primary-500">
                 <div class="flex items-center">
                     <div class="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center mr-4">
-{{--                        <i class="lni lni-shopping-cart text-primary-600 text-xl"></i>--}}
+                        {{--                        <i class="lni lni-shopping-cart text-primary-600 text-xl"></i>--}}
                         <x-ui.icon name="tag" class="w-5 h-5"></x-ui.icon>
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Today's Sales</p>
-                        <p class="text-2xl font-bold text-gray-900">Rs. {{ number_format($todaySales, 2) }}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ $currency_symbol }} {{ number_format($todaySales, 2) }}</p>
                     </div>
                 </div>
-                <div class="mt-4 flex items-center text-sm {{ $todayChange >= 0 ? 'text-success-600' : 'text-danger-600' }}">
+                <div
+                    class="mt-4 flex items-center text-sm {{ $todayChange >= 0 ? 'text-success-600' : 'text-danger-600' }}">
                     <i class="lni lni-{{ $todayChange >= 0 ? 'arrow-up' : 'arrow-down' }} mr-1"></i>
                     <span>{{ abs(round($todayChange, 1)) }}% from yesterday</span>
                 </div>
@@ -74,10 +75,11 @@
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Monthly Revenue</p>
-                        <p class="text-2xl font-bold text-gray-900">Rs. {{ number_format($monthSales, 2) }}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ $currency_symbol }} {{ number_format($monthSales, 2) }}</p>
                     </div>
                 </div>
-                <div class="mt-4 flex items-center text-sm {{ $monthChange >= 0 ? 'text-success-600' : 'text-danger-600' }}">
+                <div
+                    class="mt-4 flex items-center text-sm {{ $monthChange >= 0 ? 'text-success-600' : 'text-danger-600' }}">
                     <i class="lni lni-{{ $monthChange >= 0 ? 'arrow-up' : 'arrow-down' }} mr-1"></i>
                     <span>{{ abs(round($monthChange, 1)) }}% from last month</span>
                 </div>
@@ -90,10 +92,11 @@
             <x-ui.card title="Recent Sales" padding="p-6">
                 <div class="space-y-4">
                     @forelse($recentSales as $sale)
-                        <div class="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-primary-300 transition-colors">
+                        <div
+                            class="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-primary-300 transition-colors">
                             <div class="flex items-center space-x-3">
                                 <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-{{--                                    <i class="lni lni-receipt text-primary-600"></i>--}}
+                                    {{--                                    <i class="lni lni-receipt text-primary-600"></i>--}}
                                     <x-ui.icon name="report" class="w-5 h-5"></x-ui.icon>
                                 </div>
                                 <div>
@@ -105,7 +108,7 @@
                                 </div>
                             </div>
                             <div class="text-right">
-                                <p class="font-bold text-gray-900">Rs. {{ number_format($sale->total_amount, 2) }}</p>
+                                <p class="font-bold text-gray-900">{{ $currency_symbol }} {{ number_format($sale->total_amount, 2) }}</p>
                                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
                             {{ $sale->payment_method == 'cash' ? 'bg-green-100 text-green-800' :
                                ($sale->payment_method == 'card' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800') }}">
@@ -123,7 +126,8 @@
 
                 @if($recentSales->count() > 0)
                     <div class="mt-4 pt-4 border-t border-gray-200">
-                        <a href="{{ route('sales.index') }}" class="text-primary-600 hover:text-primary-700 font-medium text-sm flex items-center justify-center">
+                        <a href="{{ route('sales.index') }}"
+                           class="text-primary-600 hover:text-primary-700 font-medium text-sm flex items-center justify-center">
                             View All Sales
                             <i class="lni lni-arrow-right ml-1"></i>
                         </a>
@@ -135,7 +139,8 @@
             <x-ui.card title="Stock Alerts" padding="p-6">
                 <div class="space-y-3">
                     @forelse($lowStockAlerts as $product)
-                        <div class="flex items-center justify-between p-3 border-l-4 border-warning-500 bg-warning-50 rounded-lg">
+                        <div
+                            class="flex items-center justify-between p-3 border-l-4 {{$product->stock === 0 ? 'border-danger-500' : 'border-warning-500'}} {{$product->stock === 0 ? 'bg-danger-50' : 'bg-warning-50'}} rounded-lg">
                             <div class="flex items-center">
                                 <i class="lni lni-exclamation-circle text-warning-500 mr-3"></i>
                                 <div>
@@ -143,7 +148,8 @@
                                     <p class="text-sm text-gray-600">
                                         Stock: {{ $product->stock }} {{ $product->unit }} •
                                         @if($product->category)
-                                            <span class="text-xs px-2 py-1 bg-gray-100 rounded">{{ $product->category->name }}</span>
+                                            <span
+                                                class="text-xs px-2 py-1 bg-gray-100 rounded">{{ $product->category->name }}</span>
                                         @endif
                                     </p>
                                 </div>
@@ -163,7 +169,8 @@
 
                 @if($lowStockAlerts->count() > 0)
                     <div class="mt-4 pt-4 border-t border-gray-200">
-                        <a href="{{ route('inventory.index') }}?stock_status=low" class="text-warning-600 hover:text-warning-700 font-medium text-sm flex items-center justify-center">
+                        <a href="{{ route('inventory.index') }}?stock_status=low"
+                           class="text-warning-600 hover:text-warning-700 font-medium text-sm flex items-center justify-center">
                             View All Low Stock Items
                             <i class="lni lni-arrow-right ml-1"></i>
                         </a>
@@ -175,7 +182,8 @@
             <x-ui.card title="Recently Added Products" padding="p-6">
                 <div class="space-y-4">
                     @forelse($recentProducts as $product)
-                        <div class="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-green-300 transition-colors">
+                        <div
+                            class="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-green-300 transition-colors">
                             <div class="flex items-center space-x-3">
                                 <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                                     <i class="lni lni-package text-green-600"></i>
@@ -184,14 +192,15 @@
                                     <h4 class="font-semibold text-gray-900">{{ $product->name }}</h4>
                                     <p class="text-sm text-gray-600">
                                         @if($product->category)
-                                            <span class="text-xs px-2 py-1 bg-gray-100 rounded mr-2">{{ $product->category->name }}</span>
+                                            <span
+                                                class="text-xs px-2 py-1 bg-gray-100 rounded mr-2">{{ $product->category->name }}</span>
                                         @endif
                                         Stock: {{ $product->stock }} {{ $product->unit }}
                                     </p>
                                 </div>
                             </div>
                             <div class="text-right">
-                                <p class="font-bold text-gray-900">Rs. {{ number_format($product->price, 2) }}</p>
+                                <p class="font-bold text-gray-900">{{ $currency_symbol }} {{ number_format($product->price, 2) }}</p>
                                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
                             {{ $product->stock == 0 ? 'bg-red-100 text-red-800' :
                                ($product->stock < 10 ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800') }}">
@@ -209,7 +218,8 @@
 
                 @if($recentProducts->count() > 0)
                     <div class="mt-4 pt-4 border-t border-gray-200">
-                        <a href="{{ route('inventory.index') }}" class="text-green-600 hover:text-green-700 font-medium text-sm flex items-center justify-center">
+                        <a href="{{ route('inventory.index') }}"
+                           class="text-green-600 hover:text-green-700 font-medium text-sm flex items-center justify-center">
                             View All Products
                             <i class="lni lni-arrow-right ml-1"></i>
                         </a>
@@ -221,7 +231,8 @@
             <x-ui.card title="Expiring Soon" padding="p-6">
                 <div class="space-y-3">
                     @forelse($expiringProducts as $batch)
-                        <div class="flex items-center justify-between p-3 border-l-4 border-danger-500 bg-danger-50 rounded-lg">
+                        <div
+                            class="flex items-center justify-between p-3 border-l-4 border-danger-500 bg-danger-50 rounded-lg">
                             <div class="flex items-center">
                                 <i class="lni lni-timer text-danger-500 mr-3"></i>
                                 <div>
@@ -234,7 +245,8 @@
                                 </div>
                             </div>
                             <div class="text-right">
-                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-danger-100 text-danger-800">
+                        <span
+                            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-danger-100 text-danger-800">
                             {{ $batch->expiry_date->diffForHumans() }}
                         </span>
                             </div>
@@ -249,7 +261,8 @@
 
                 @if($expiringProducts->count() > 0)
                     <div class="mt-4 pt-4 border-t border-gray-200">
-                        <a href="{{ route('reports.expiring-products') }}" class="text-danger-600 hover:text-danger-700 font-medium text-sm flex items-center justify-center">
+                        <a href="{{ route('reports.expiring-products') }}"
+                           class="text-danger-600 hover:text-danger-700 font-medium text-sm flex items-center justify-center">
                             View All Expiring Products
                             <i class="lni lni-arrow-right ml-1"></i>
                         </a>
@@ -263,7 +276,7 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <x-ui.action-button variant="primary" href="{{ route('pos.index') }}" class="flex-col h-24">
                     <i class="lni lni-cart text-2xl mb-2"></i>
-{{--                    <x-ui.icon name="nav/cart" class="white"></x-ui.icon>--}}
+                    {{--                    <x-ui.icon name="nav/cart" class="white"></x-ui.icon>--}}
                     <span>New Sale</span>
                 </x-ui.action-button>
 

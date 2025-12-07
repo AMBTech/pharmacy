@@ -1,5 +1,56 @@
 @extends('layouts.app')
 
+@push('styles')
+    <style>
+        /* Search Results Dropdown */
+        #productResults {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #E5E7EB;
+            border-top: none;
+            border-radius: 0 0 0.75rem 0.75rem;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 50;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        #productResults:not(:empty) {
+            display: block;
+        }
+
+        #productResults li {
+            border-bottom: 1px solid #F3F4F6;
+        }
+
+        #productResults li:last-child {
+            border-bottom: none;
+        }
+
+        /* Cart Table Inputs */
+        #cartTableBody input[type="number"],
+        #cartTableBody select {
+            border: 1px solid #D1D5DB;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            width: 100%;
+        }
+
+        #cartTableBody input[type="number"]:focus,
+        #cartTableBody select:focus {
+            outline: none;
+            border-color: #3B82F6;
+            ring: 2px;
+            ring-color: #3B82F6;
+        }
+    </style>
+@endpush
+
 @section('content')
     <div class="h-full flex flex-col">
         <!-- Page Header -->
@@ -8,30 +59,15 @@
                 <h1 class="text-3xl font-bold text-gray-900">Point of Sale</h1>
                 <p class="text-sm text-gray-500 mt-1">{{ now()->format('l, F j, Y • h:i A') }}</p>
             </div>
-            {{--<div class="grid grid-cols-2 gap-2 mt-4">
-                <button class="bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors complete-sale-btn">
-                    Complete Sale
-                </button>
-                <button class="bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors hold-sale-btn">
-                    Hold Sale
-                </button>
-            </div>--}}
 
             <div class="flex items-center space-x-3">
-{{--                <button--}}
-{{--                    class="bg-white border border-gray-300 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 flex items-center transition-colors"--}}
-{{--                    id="holdSaleBtn">--}}
-{{--                    <i class="lni lni-save mr-2 text-blue-600"></i>--}}
-{{--                    Hold Sale--}}
-{{--                </button>--}}
-{{--                <button class="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center complete-sale-btn">--}}
-{{--                    Complete Sale--}}
-{{--                </button>--}}
-                <button class="bg-orange-600 cursor-pointer text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center hold-sale-btn"
-                        id="hold-sale-btn">
+                <button
+                    class="bg-orange-600 cursor-pointer text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center holdInvoiceBtn"
+                    id="holdInvoiceBtn">
                     Hold Sale
                 </button>
-                <button class="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center show-hold-management-btn">
+                <button
+                    class="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center show-hold-management-btn">
                     <i class="lni lni-timer mr-2"></i>
                     Held Sales
                 </button>
@@ -41,270 +77,196 @@
                     <i class="lni lni-printer mr-2 text-gray-600"></i>
                     Last Receipt
                 </button>
-                <button
-                    class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:from-blue-100 hover:to-indigo-100 flex items-center transition-all"
-                    id="keyboardShortcuts">
-                    <i class="lni lni-keyboard mr-2 text-blue-600"></i>
-                    Shortcuts
-                </button>
             </div>
         </div>
 
-        <!-- Main POS Layout -->
-        <div class="flex-1 flex gap-6">
-            <!-- Products Section (60%) -->
-            <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <!-- Main POS Layout - Full Width -->
+        <div class="flex-1 flex flex-col gap-6">
+            <!-- Products Section with Search and Table -->
+            <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 p-6 overflow-hidden flex flex-col">
                 <!-- Search Bar -->
-                <div class="mb-4">
+                <div class="mb-4 flex-shrink-0">
+                    <!-- Quick Actions Bar -->
+                    <div class="flex items-center gap-4 mb-4">
+                        <span class="font-light sm:inline">Search: <code>F1</code></span>
+                        <span class="font-light sm:inline">Customer Information: <code>F2</code></span>
+                        <span class="font-light sm:inline">Hold: <code>F3</code></span>
+                        <span class="font-light sm:inline">Last Receipt: <code>F4</code></span>
+                        <span class="font-light sm:inline">Apply Discount: <code>F7</code></span>
+                        <span class="font-light sm:inline">Clear Cart: <code>Ctrl + Delete</code></span>
+                    </div>
                     <div class="relative">
                         <i class="lni lni-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl"></i>
                         <input
                             type="text"
                             id="productSearch"
-                            placeholder="Search products by name, brand, or generic name..."
-                            class="w-full pl-12 pr-36 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base transition-all"
+                            data-pos-role="product-search"
+                            placeholder="Search products by name, brand, or generic name... (Press Enter to select)"
+                            class="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base transition-all"
                         >
-                        <div class="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
-                            <span class="text-sm text-gray-400">or</span>
-                            <button
-                                class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:from-blue-600 hover:to-blue-700 flex items-center shadow-sm transition-all"
-                                id="scanBarcodeBtn">
-                                <i class="lni lni-barcode mr-1.5"></i>
-                                Scan
-                            </button>
-                        </div>
+                        <!-- Results list (keyboard navigable) -->
+                        <ul id="productResults" data-pos-role="product-results" role="listbox" tabindex="-1"></ul>
                     </div>
                 </div>
 
-                <!-- Filters & Sort -->
-                <div class="flex items-center justify-between mb-4 gap-4">
-                    <div class="flex items-center space-x-2 flex-1 overflow-x-auto pb-1">
-                        <button
-                            class="category-filter px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all bg-blue-600 text-white shadow-sm"
-                            data-category="all">
-                            All Products
-                        </button>
-                        <button
-                            class="category-filter px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all bg-gray-100 text-gray-700 hover:bg-gray-200"
-                            data-category="tablet">
-                            Tablets
-                        </button>
-                        <button
-                            class="category-filter px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all bg-gray-100 text-gray-700 hover:bg-gray-200"
-                            data-category="syrup">
-                            Syrups
-                        </button>
-                        <button
-                            class="category-filter px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all bg-gray-100 text-gray-700 hover:bg-gray-200"
-                            data-category="injection">
-                            Injections
-                        </button>
-                    </div>
-                    <select id="sortProducts"
-                            class="px-4 py-2 border-2 border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
-                        <option value="name-asc">Name (A-Z)</option>
-                        <option value="name-desc">Name (Z-A)</option>
-                        <option value="price-asc">Price (Low-High)</option>
-                        <option value="price-desc">Price (High-Low)</option>
-                        <option value="stock-asc">Stock (Low-High)</option>
-                        <option value="stock-desc">Stock (High-Low)</option>
-                    </select>
-                </div>
-
-                <!-- Product Grid -->
-                <div
-                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[calc(100vh-350px)] overflow-y-auto pr-2 custom-scrollbar">
-                    @foreach($products as $product)
-                        <div
-                            class="group relative border-2 border-gray-200 rounded-xl p-4 hover:border-blue-400 hover:shadow-lg transition-all duration-200 cursor-pointer product-card bg-gradient-to-br from-white to-gray-50"
-                            data-product-id="{{ $product->id }}"
-                            data-product-name="{{ $product->name }}"
-                            data-product-barcode="{{ $product->barcode ?? $product->id }}"
-                            data-product-price="{{ $product->price }}"
-                            data-product-stock="{{ $product->stock }}"
-                            data-product-unit="{{ $product->unit }}"
-                            data-product-category="{{ strtolower($product->category ?? 'other') }}">
-
-                            <!-- Stock Badge -->
-                            @if($product->stock < 10)
-                                <div class="absolute top-2 right-2 z-10">
-                                    <span
-                                        class="px-2 py-1 text-xs font-semibold rounded-full {{ $product->stock < 5 ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700' }}">
-                                        Low Stock
-                                    </span>
-                                </div>
-                            @endif
-
-                            <div class="flex items-start justify-between mb-3">
-                                <div class="flex-1 min-w-0">
-                                    <h3 class="font-bold text-gray-900 text-base mb-1 truncate group-hover:text-blue-600 transition-colors">{{ $product->name }}</h3>
-                                    @if($product->generic_name)
-                                        <p class="text-xs text-gray-500 mb-0.5 truncate">{{ $product->generic_name }}</p>
-                                    @endif
-                                    <p class="text-xs text-gray-400 font-medium">{{ $product->brand }}</p>
-                                </div>
-                                <div
-                                    class="w-14 h-14 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl flex items-center justify-center ml-3 group-hover:from-blue-100 group-hover:to-indigo-100 transition-all">
-                                    <i class="lni lni-capsule text-blue-500 text-2xl"></i>
-                                </div>
-                            </div>
-
-                            <div class="flex justify-between items-end">
-                                <div>
-                                    <p class="text-2xl font-extrabold text-gray-900 mb-1">
-                                        Rs. {{ number_format($product->price, 2) }}</p>
-                                    <div class="flex items-center space-x-1">
-                                        <i class="lni lni-package text-xs {{ $product->stock < 10 ? 'text-orange-500' : 'text-green-500' }}"></i>
-                                        <p class="text-xs font-medium {{ $product->stock < 10 ? 'text-orange-600' : 'text-green-600' }}">
-                                            {{ $product->stock }} {{ $product->unit }}
-                                        </p>
-                                    </div>
-                                </div>
-                                <button
-                                    class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-2.5 rounded-xl hover:from-blue-700 hover:to-blue-800 hover:shadow-lg transform hover:scale-105 transition-all duration-200 add-to-cart-btn">
-                                    <i class="lni lni-plus text-lg"></i>
-                                </button>
-                            </div>
-                        </div>
-                    @endforeach
+                <!-- Products Table - Scrollable -->
+                <div class="flex-1 overflow-y-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50 sticky top-0 z-10">
+                        <tr>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Product Name
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                Stock
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                                Qty
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                Rate
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                Total
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                                Action
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody id="cartTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Cart items will be added here dynamically -->
+                        <tr id="emptyCartRow">
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-400">
+                                <i class="lni lni-shopping-basket text-4xl block mb-2"></i>
+                                <p class="font-medium">No items in cart</p>
+                                <p class="text-sm mt-1">Search and add products to get started</p>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <!-- Cart Section (40%) -->
-            <div class="w-96 bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-bold text-gray-900 flex items-center">
-                        <i class="lni lni-cart text-blue-600 mr-2"></i>
-                        Cart
-                    </h3>
-                    <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold" id="cartCount">0</span>
-                </div>
-
-                <!-- Customer Info -->
-                <div class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <div class="flex items-center space-x-2 mb-2">
-                        <i class="lni lni-user text-gray-400"></i>
-                        <input type="text" id="customerName" placeholder="Customer Name (Optional)"
-                               class="flex-1 bg-transparent border-0 focus:ring-0 text-sm placeholder-gray-400 px-0 py-2">
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <i class="lni lni-phone text-gray-400"></i>
-                        <input type="tel" id="customerPhone" placeholder="Phone Number"
-                               class="flex-1 bg-transparent border-0 focus:ring-0 text-sm placeholder-gray-400 px-0 py-2 focus-visible:border-none">
-                    </div>
-                </div>
-
-                <!-- Cart Items -->
-                <div class="flex-1 space-y-2 overflow-y-auto max-h-[35vh] mb-4 pr-2 custom-scrollbar" id="cartItems">
-                    <!-- Cart items will be dynamically added here -->
-                    <div class="text-center text-gray-400 py-8" id="emptyCart">
-                        <i class="lni lni-shopping-basket text-5xl text-gray-300 mb-3"></i>
-                        <p class="font-medium">Your cart is empty</p>
-                        <p class="text-sm mt-1">Start adding products</p>
-                    </div>
-                </div>
-
-                <!-- Cart Summary -->
-                <div class="border-t-2 border-gray-200 pt-4 space-y-3">
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-600 font-medium">Subtotal</span>
-                        <span class="text-gray-900 font-semibold" id="subtotal">Rs. 0.00</span>
-                    </div>
-
-                    <!-- Discount Section -->
-                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm text-gray-700 font-medium">Discount</span>
-                            <div class="flex items-center space-x-1 bg-white rounded-lg p-1 border border-gray-200">
-                                <button class="discount-type px-3 py-1 text-xs font-semibold rounded-md transition-all"
-                                        data-type="fixed">Rs.
-                                </button>
-                                <button
-                                    class="discount-type px-3 py-1 text-xs font-semibold rounded-md bg-blue-600 text-white transition-all"
-                                    data-type="percentage">%
-                                </button>
+            <!-- Cart Summary Section - Sticky at Bottom -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 flex-shrink-0">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Left Side: Customer Info -->
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 mb-3 flex items-center">
+                            <i class="lni lni-user text-blue-600 mr-2"></i>
+                            Customer Information
+                        </h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Name (Optional)</label>
+                                <input type="text" id="customerName" placeholder="Customer Name"
+                                       class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Phone</label>
+                                <input type="tel" id="customerPhone" placeholder="Phone Number"
+                                       class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             </div>
                         </div>
-                        <div class="flex gap-2">
-                            <input type="number"
-                                   id="discountInput"
-                                   placeholder="0"
-                                   class="flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                   value="0">
-                            <button
-                                class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
-                                id="applyDiscountBtn">
-                                Apply
-                            </button>
-                        </div>
-                        <div class="flex justify-between text-xs text-gray-500 mt-2" id="discountAmount"
-                             style="display: none;">
-                            <span>Discount Applied</span>
-                            <span class="font-semibold text-red-600" id="discountValue">-Rs. 0.00</span>
-                        </div>
                     </div>
 
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-600 font-medium">Tax ({{$settings['tax_rate']}}%)</span>
-                        <span class="text-gray-900 font-semibold" id="tax">Rs. 0.00</span>
-                    </div>
-
-                    <div
-                        class="flex justify-between items-center bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-lg border-2 border-blue-200">
-                        <span class="text-lg font-bold text-gray-900">Total</span>
-                        <span class="text-2xl font-extrabold text-blue-600" id="total">Rs. 0.00</span>
-                    </div>
-
-                    <!-- Payment Method -->
+                    <!-- Right Side: Totals and Actions -->
                     <div>
-                        <p class="text-xs font-semibold text-gray-700 mb-2">Payment Method</p>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button
-                                class="payment-method px-3 py-2.5 rounded-lg text-xs font-semibold transition-all bg-blue-600 text-white shadow-sm"
-                                data-method="cash">
-                                <i class="lni lni-money-location block text-lg mb-1"></i>
-                                Cash
-                            </button>
-                            <button
-                                class="payment-method px-3 py-2.5 rounded-lg text-xs font-semibold transition-all bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                data-method="card">
-                                <i class="lni lni-credit-cards block text-lg mb-1"></i>
-                                Card
-                            </button>
-                        </div>
-                    </div>
+                        <h3 class="text-lg font-bold text-gray-900 mb-3 flex items-center">
+                            <i class="lni lni-calculator text-blue-600 mr-2"></i>
+                            Order Summary
+                            <span class="ml-auto bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-semibold"
+                                  id="cartCount">0 items</span>
+                        </h3>
 
-                    <!-- Action Buttons -->
-                    <div class="grid grid-cols-2 gap-2 mt-4">
-                        <button
-                            class="bg-gradient-to-r from-green-600 to-green-700 text-white py-3.5 rounded-xl font-bold hover:from-green-700 hover:to-green-800 hover:shadow-lg transform hover:scale-105 transition-all complete-sale-btn">
-                            <i class="lni lni-checkmark mr-1"></i>
-                            Complete
-                        </button>
-                        <button
-                            class="bg-white border-2 border-gray-300 text-gray-700 py-3.5 rounded-xl font-bold hover:bg-gray-50 hover:border-gray-400 transition-all"
-                            id="clearCart">
-                            <i class="lni lni-close mr-1"></i>
-                            Clear
-                        </button>
-                    </div>
+                        <div class="space-y-3">
+                            <!-- Subtotal -->
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600 font-medium">Subtotal</span>
+                                <span class="text-gray-900 font-semibold" id="subtotal">{{$currency_symbol}} 0.00</span>
+                            </div>
 
-                    <!-- Quick Cash -->
-                    <div class="mt-3">
-                        <p class="text-xs font-semibold text-gray-700 mb-2">Quick Cash Amounts</p>
-                        <div class="grid grid-cols-3 gap-2">
-                            <button
-                                class="bg-gradient-to-br from-gray-100 to-gray-50 border border-gray-300 py-2.5 rounded-lg text-sm font-bold hover:from-gray-200 hover:to-gray-100 transition-all quick-cash"
-                                data-amount="500">Rs. 500
-                            </button>
-                            <button
-                                class="bg-gradient-to-br from-gray-100 to-gray-50 border border-gray-300 py-2.5 rounded-lg text-sm font-bold hover:from-gray-200 hover:to-gray-100 transition-all quick-cash"
-                                data-amount="1000">Rs. 1000
-                            </button>
-                            <button
-                                class="bg-gradient-to-br from-gray-100 to-gray-50 border border-gray-300 py-2.5 rounded-lg text-sm font-bold hover:from-gray-200 hover:to-gray-100 transition-all quick-cash"
-                                data-amount="2000">Rs. 2000
-                            </button>
+                            <!-- Discount -->
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs text-gray-700 font-medium">Discount</span>
+                                    <div class="flex items-center space-x-1">
+                                        <button
+                                            class="discount-type px-2 py-1 text-xs font-semibold rounded transition-all"
+                                            data-type="fixed">{{ $currency_symbol }}
+                                        </button>
+                                        <button
+                                            class="discount-type px-2 py-1 text-xs font-semibold rounded bg-blue-600 text-white transition-all"
+                                            data-type="percentage">%
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <input type="number" id="discountInput" placeholder="0"
+                                           class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                           value="0.0">
+                                    <p class="text-xs text-gray-500 mt-1">Press Enter to apply.</p>
+                                </div>
+                                <div class="flex justify-between text-xs text-gray-500 mt-2" id="discountAmount"
+                                     style="display: none;">
+                                    <span>Discount Applied</span>
+                                    <span class="font-semibold text-red-600" id="discountValue">-{{ $currency_symbol }} 0.00</span>
+                                </div>
+                            </div>
+
+                            <!-- Tax -->
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600 font-medium">Tax ({{$settings['tax_rate']}}%)</span>
+                                <span class="text-gray-900 font-semibold" id="tax">{{ $currency_symbol }} 0.00</span>
+                            </div>
+
+                            <!-- Total -->
+                            <div
+                                class="flex justify-between items-center bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-lg border-2 border-blue-200">
+                                <span class="text-lg font-bold text-gray-900">Total</span>
+                                <span class="text-2xl font-extrabold text-blue-600" id="total">{{ $currency_symbol }} 0.00</span>
+                            </div>
+
+                            <!-- Payment Method -->
+                            <div>
+                                <p class="text-xs font-semibold text-gray-700 mb-2">Payment Method</p>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button
+                                        class="payment-method px-3 py-2 rounded-lg text-xs font-semibold transition-all bg-blue-600 text-white shadow-sm"
+                                        data-method="cash">
+                                        <i class="lni lni-money-location block text-lg mb-1"></i>
+                                        Cash
+                                    </button>
+                                    <button
+                                        class="payment-method px-3 py-2 rounded-lg text-xs font-semibold transition-all bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                        data-method="card">
+                                        <i class="lni lni-credit-cards block text-lg mb-1"></i>
+                                        Card
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="grid grid-cols-2 gap-2 mt-2">
+                                <button
+                                    class="bg-gradient-to-r from-green-600 to-green-700 text-white py-3 rounded-xl font-bold hover:from-green-700 hover:to-green-800 hover:shadow-lg transition-all complete-sale-btn">
+                                    <i class="lni lni-checkmark mr-1"></i>
+                                    Complete
+                                </button>
+                                <button
+                                    class="bg-white border-2 border-gray-300 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-50 hover:border-gray-400 transition-all"
+                                    id="clearCart">
+                                    <i class="lni lni-close mr-1"></i>
+                                    Clear
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -312,39 +274,6 @@
         </div>
     </div>
 
-    <!-- Cart Item Template (Hidden) -->
-    <template id="cartItemTemplate">
-        <div class="cart-item p-3 border-2 border-gray-200 rounded-xl bg-white hover:border-blue-300 transition-all"
-             data-product-id="">
-            <div class="flex justify-between items-start mb-2.5">
-                <div class="flex-1 min-w-0">
-                    <div class="font-semibold text-gray-900 text-sm product-name truncate"></div>
-                    <div class="text-xs text-gray-500 product-unit"></div>
-                </div>
-                <div class="text-right ml-2">
-                    <div class="font-bold text-gray-900 product-total">Rs. 0.00</div>
-                </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <div class="flex items-center bg-gray-100 rounded-lg border border-gray-300">
-                    <button class="quantity-btn minus px-3 py-1.5 hover:bg-gray-200 transition-colors rounded-l-lg">
-                        <i class="lni lni-minus text-sm"></i>
-                    </button>
-                    <input type="number"
-                           class="quantity-input w-12 text-center border-0 bg-transparent py-1.5 text-sm font-semibold focus:ring-0"
-                           value="1" min="1">
-                    <button class="quantity-btn plus px-3 py-1.5 hover:bg-gray-200 transition-colors rounded-r-lg">
-                        <i class="lni lni-plus text-sm"></i>
-                    </button>
-                </div>
-                <span class="text-xs text-gray-500 product-price flex-1">Rs. 0.00 each</span>
-                <button
-                    class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-all remove-item">
-                    <i class="lni lni-trash-can text-base"></i>
-                </button>
-            </div>
-        </div>
-    </template>
 
     <!-- Payment Modal -->
     <div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
@@ -360,7 +289,7 @@
                 <div class="bg-gray-50 p-4 rounded-xl mb-4">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-gray-600">Total Amount</span>
-                        <span class="text-3xl font-bold text-green-600" id="modalTotal">Rs. 0.00</span>
+                        <span class="text-3xl font-bold text-green-600" id="modalTotal">{{ $currency_symbol }} 0.00</span>
                     </div>
                     <div class="text-sm text-gray-500" id="modalItemCount">0 items</div>
                 </div>
@@ -382,7 +311,7 @@
                 <div class="bg-green-50 p-4 rounded-xl mb-6">
                     <div class="flex justify-between items-center">
                         <span class="text-gray-700 font-medium">Change to Return</span>
-                        <span class="text-2xl font-bold text-green-600" id="changeAmount">Rs. 0.00</span>
+                        <span class="text-2xl font-bold text-green-600" id="changeAmount">{{ $currency_symbol }} 0.00</span>
                     </div>
                 </div>
 
@@ -402,143 +331,6 @@
         </div>
     </div>
 
-    <!-- Barcode Scanner Modal -->
-    <div id="scannerModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
-         style="display: none;">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
-            <div class="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 rounded-t-2xl">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-2xl font-bold text-white flex items-center">
-                        <i class="lni lni-barcode mr-3 text-3xl"></i>
-                        Scan Barcode
-                    </h3>
-                    <button class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-all"
-                            id="closeScannerModal">
-                        <i class="lni lni-close text-2xl"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="p-6">
-                <div class="text-center mb-6">
-                    <div class="inline-block p-6 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl mb-4">
-                        <i class="lni lni-barcode text-6xl text-purple-600 animate-pulse"></i>
-                    </div>
-                    <p class="text-gray-700 font-medium mb-2">Ready to scan</p>
-                    <p class="text-sm text-gray-500">Use your barcode scanner or enter code manually</p>
-                </div>
-
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Barcode / Product Code</label>
-                        <input
-                            type="text"
-                            id="barcodeInput"
-                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl text-lg font-mono focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-center"
-                            placeholder="Scan or type barcode"
-                            autocomplete="off">
-                    </div>
-
-                    <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg">
-                        <div class="flex items-start space-x-2">
-                            <i class="lni lni-information text-blue-600 mt-0.5"></i>
-                            <div class="text-xs text-blue-700">
-                                <p class="font-semibold mb-1">Tips:</p>
-                                <ul class="space-y-1 ml-2">
-                                    <li>• Point scanner at barcode and pull trigger</li>
-                                    <li>• Or type the code manually and press Enter</li>
-                                    <li>• Press ESC to close this dialog</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="scanResultArea" class="hidden">
-                        <div class="bg-green-50 border border-green-200 p-4 rounded-xl">
-                            <div class="flex items-center space-x-3">
-                                <i class="lni lni-checkmark-circle text-green-600 text-2xl"></i>
-                                <div class="flex-1">
-                                    <p class="text-sm font-semibold text-green-900">Product Found!</p>
-                                    <p class="text-xs text-green-700" id="scannedProductName"></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="scanErrorArea" class="hidden">
-                        <div class="bg-red-50 border border-red-200 p-4 rounded-xl">
-                            <div class="flex items-center space-x-3">
-                                <i class="lni lni-close-circle text-red-600 text-2xl"></i>
-                                <div class="flex-1">
-                                    <p class="text-sm font-semibold text-red-900">Product Not Found</p>
-                                    <p class="text-xs text-red-700">Barcode: <span id="failedBarcode"></span></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-6 grid grid-cols-2 gap-3">
-                    <button
-                        class="bg-gray-100 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-200 transition-colors"
-                        id="cancelScanner">
-                        Cancel
-                    </button>
-                    <button
-                        class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-xl font-bold hover:from-purple-700 hover:to-indigo-700 transition-all"
-                        id="manualScanBtn">
-                        Scan Manually
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Keyboard Shortcuts Modal -->
-    <div id="shortcutsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
-         style="display: none;">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4">
-            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 rounded-t-2xl">
-                <h3 class="text-2xl font-bold text-white flex items-center">
-                    <i class="lni lni-keyboard mr-3 text-3xl"></i>
-                    Keyboard Shortcuts
-                </h3>
-            </div>
-            <div class="p-6 space-y-3">
-                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span class="text-gray-700 font-medium">Complete Sale</span>
-                    <kbd class="px-3 py-1 bg-white border-2 border-gray-300 rounded-lg font-mono text-sm font-semibold">Ctrl
-                        + Enter</kbd>
-                </div>
-                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span class="text-gray-700 font-medium">Clear Cart</span>
-                    <kbd class="px-3 py-1 bg-white border-2 border-gray-300 rounded-lg font-mono text-sm font-semibold">Ctrl
-                        + Delete</kbd>
-                </div>
-                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span class="text-gray-700 font-medium">Focus Search</span>
-                    <kbd class="px-3 py-1 bg-white border-2 border-gray-300 rounded-lg font-mono text-sm font-semibold">Ctrl
-                        + K</kbd>
-                </div>
-                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span class="text-gray-700 font-medium">Hold Sale</span>
-                    <kbd class="px-3 py-1 bg-white border-2 border-gray-300 rounded-lg font-mono text-sm font-semibold">Ctrl
-                        + H</kbd>
-                </div>
-                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span class="text-gray-700 font-medium">Barcode Scanner</span>
-                    <kbd class="px-3 py-1 bg-white border-2 border-gray-300 rounded-lg font-mono text-sm font-semibold">Ctrl
-                        + B</kbd>
-                </div>
-            </div>
-            <div class="p-4 border-t">
-                <button
-                    class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
-                    id="closeShortcuts">
-                    Got it!
-                </button>
-            </div>
-        </div>
-    </div>
 
     <!-- Hold Management Modal -->
     <div id="holdManagementModal" class="fixed inset-0 bg-gray-600/50 overflow-y-auto h-full w-full hidden z-50">
@@ -566,7 +358,10 @@
 
 @push('scripts')
     <script>
+        const CURRENCY_SYMBOL = '{{ $currency_symbol }}';
         class POSCart {
+            self = this;
+
             constructor() {
                 this.cart = [];
                 this.discountType = 'percentage';
@@ -616,9 +411,9 @@
                 });
 
                 // Sort products
-                document.getElementById('sortProducts').addEventListener('change', (e) => {
+                /*document.getElementById('sortProducts').addEventListener('change', (e) => {
                     this.sortProducts(e.target.value);
-                });
+                });*/
 
                 // Discount type toggle
                 document.querySelectorAll('.discount-type').forEach(btn => {
@@ -627,10 +422,16 @@
                     });
                 });
 
-                // Apply discount
-                document.getElementById('applyDiscountBtn').addEventListener('click', () => {
-                    this.applyDiscount();
-                });
+                // Apply discount on Enter (button removed)
+                const discountEl = document.getElementById('discountInput');
+                if (discountEl) {
+                    discountEl.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            this.applyDiscount();
+                        }
+                    });
+                }
 
                 // Payment method selection
                 document.querySelectorAll('.payment-method').forEach(btn => {
@@ -666,6 +467,21 @@
                     }, 300);
                 });
 
+                // Quick Actions bindings
+                const qa = id => document.getElementById(id);
+                qa('qaFocusSearch')?.addEventListener('click', () => {
+                    const el = document.getElementById('productSearch');
+                    if (el) {
+                        el.focus();
+                        el.select();
+                    }
+                });
+                qa('qaHoldSale')?.addEventListener('click', () => this.holdSale());
+                qa('qaHeldSales')?.addEventListener('click', () => this.showHoldManagement());
+                qa('qaClearCart')?.addEventListener('click', () => this.clearCart());
+                qa('qaCompleteSale')?.addEventListener('click', () => this.showPaymentModal());
+                qa('qaLastReceipt')?.addEventListener('click', () => document.getElementById('lastReceiptBtn')?.click());
+
                 // Payment modal events
                 document.getElementById('cancelPayment').addEventListener('click', () => {
                     this.hidePaymentModal();
@@ -679,41 +495,16 @@
                     this.updateChange();
                 });
 
-                // Keyboard shortcuts modal
-                document.getElementById('keyboardShortcuts').addEventListener('click', () => {
-                    this.showShortcutsModal();
-                });
-
-                document.getElementById('closeShortcuts').addEventListener('click', () => {
-                    this.hideShortcutsModal();
-                });
-
-                // Barcode scanner
-                document.getElementById('scanBarcodeBtn').addEventListener('click', () => {
-                    this.showScannerModal();
-                });
-
-                document.getElementById('closeScannerModal').addEventListener('click', () => {
-                    this.hideScannerModal();
-                });
-
-                document.getElementById('cancelScanner').addEventListener('click', () => {
-                    this.hideScannerModal();
-                });
-
-                document.getElementById('manualScanBtn').addEventListener('click', () => {
-                    this.processBarcodeInput();
-                });
-
-                document.getElementById('barcodeInput').addEventListener('keypress', (e) => {
+                // Enter key on amountReceived to confirm payment
+                document.getElementById('amountReceived').addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
-                        this.processBarcodeInput();
+                        document.getElementById('confirmPayment').click();
                     }
                 });
 
                 // In your POS initialization
-                document.querySelector('.hold-sale-btn').addEventListener('click', () => {
+                document.querySelector('.holdInvoiceBtn').addEventListener('click', () => {
                     this.holdSale();
                 });
 
@@ -737,8 +528,41 @@
                 });
             }
 
-            addToCart(productData) {
+            // Example modification to addToCart
+//             async addToCart(product, qty = 1, opts = {}) {
+// // existing product lookup
+//                 const line = {
+//                     product_id: product.id,
+//                     product_name: product.name,
+//                     qty,
+//                     price: product.price,
+//                     allocations: []
+//                 };
+//
+//
+//                 try {
+//                     const {allocations, remaining} = await this.allocateBatches(product.id, qty);
+//                     line.allocations = allocations; // store allocations per line
+//
+//
+//                     if (remaining > 0) {
+// // handle partial allocation per your business rule
+// // e.g., alert the user or allow backorder
+//                         console.warn('Not enough stock to fully allocate. Remaining:', remaining);
+//                     }
+//
+//
+//                     cart.push(line);
+//                     renderCart();
+//                 } catch (err) {
+//                     console.error(err);
+//                     alert('Could not allocate batches for this product.');
+//                 }
+//             }
+
+            async addToCart(productData) {
                 const existingItem = this.cart.find(item => item.id === productData.productId);
+                let isNewItem = false;
 
                 if (existingItem) {
                     if (existingItem.quantity >= parseInt(productData.productStock)) {
@@ -751,22 +575,38 @@
                         this.showNotification('Product out of stock!', 'error');
                         return;
                     }
-                    this.cart.push({
+                    let line = {
                         id: productData.productId,
                         name: productData.productName,
                         price: parseFloat(productData.productPrice),
                         unit: productData.productUnit,
                         stock: parseInt(productData.productStock),
                         quantity: 1
-                    });
+                    };
+
+                    const {allocations, remaining} = await this.allocateBatches(productData.productId, 1);
+                    line.allocations = allocations; // store allocations per line
+
+                    if (remaining > 0) {
+                        showNotification('Not enough stock to fully allocate.', 'error');
+                    }
+
+                    this.cart.push(line);
+
+                    console.log("cart", this.cart);
+
+                    isNewItem = true;
                 }
 
-                this.updateCart();
+                this.saveCartToStorage();
+                this.updateCartDisplay(isNewItem); // Focus on new item if it's new
+                this.calculateTotals();
                 this.showNotification('✓ Added to cart', 'success');
             }
 
             removeFromCart(productId) {
-                this.cart = this.cart.filter(item => item.id !== productId);
+                // Robust compare (string/number)
+                this.cart = this.cart.filter(item => String(item.id) !== String(productId));
                 this.updateCart();
             }
 
@@ -792,60 +632,260 @@
                 this.calculateTotals();
             }
 
-            updateCartDisplay() {
-                const cartItems = document.getElementById('cartItems');
-                const template = document.getElementById('cartItemTemplate');
+            updateCartDisplay(focusOnNewItem = false) {
+                const cartTableBody = document.getElementById('cartTableBody');
                 const cartCount = document.getElementById('cartCount');
+                const emptyCartRow = document.getElementById('emptyCartRow');
 
                 // Update cart count badge
-                cartCount.textContent = this.cart.length;
+                cartCount.textContent = `${this.cart.length} item${this.cart.length !== 1 ? 's' : ''}`;
 
-                // Clear cart items but preserve the empty cart message structure
-                const emptyCartHtml = `
-            <div class="text-center text-gray-400 py-8" id="emptyCart">
-                <i class="lni lni-shopping-basket text-5xl text-gray-300 mb-3"></i>
-                <p class="font-medium">Your cart is empty</p>
-                <p class="text-sm mt-1">Start adding products</p>
-            </div>
-        `;
-
-                cartItems.innerHTML = '';
+                // Clear table body
+                cartTableBody.innerHTML = '';
 
                 if (this.cart.length === 0) {
-                    cartItems.innerHTML = emptyCartHtml;
+                    // Show empty cart row
+                    cartTableBody.innerHTML = `
+                        <tr id="emptyCartRow">
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-400">
+                                <i class="lni lni-shopping-basket text-4xl block mb-2"></i>
+                                <p class="font-medium">No items in cart</p>
+                                <p class="text-sm mt-1">Search and add products to get started</p>
+                            </td>
+                        </tr>
+                    `;
                     return;
                 }
 
-                this.cart.forEach(item => {
-                    const clone = template.content.cloneNode(true);
-                    const cartItem = clone.querySelector('.cart-item');
+                let lastAddedRow = null;
 
-                    cartItem.dataset.productId = item.id;
-                    cartItem.querySelector('.product-name').textContent = item.name;
-                    cartItem.querySelector('.product-unit').textContent = `(${item.unit})`;
-                    cartItem.querySelector('.product-price').textContent = `Rs. ${item.price.toFixed(2)} each`;
-                    cartItem.querySelector('.quantity-input').value = item.quantity;
-                    cartItem.querySelector('.product-total').textContent = `Rs. ${(item.price * item.quantity).toFixed(2)}`;
+                // Add each cart item as a table row
+                this.cart.forEach((item, index) => {
+                    console.log(item);
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-gray-50';
+                    row.dataset.productId = item.id;
 
-                    // Bind events for this item
-                    cartItem.querySelector('.minus').addEventListener('click', () => {
-                        this.updateQuantity(item.id, item.quantity - 1);
-                    });
+                    const itemTotal = item.price * item.quantity;
 
-                    cartItem.querySelector('.plus').addEventListener('click', () => {
-                        this.updateQuantity(item.id, item.quantity + 1);
-                    });
+                    row.innerHTML = `
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">${this.escapeHtml(item.name)}</div>
+                            <div class="text-xs text-gray-500">${this.escapeHtml(item.unit)}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="stock">
+                                ${item.stock}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <input type="number" min="1" value="${item.quantity}" id="qty-input"
+                                    class="qty-input px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    data-product-id="${item.id}" />
+                        </td>
+                        <td class="px-6 py-4">
+                            <input type="number" min="0" step="0.01" value="${item.price.toFixed(2)}"
+                                   class="rate-input px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" disabled data-product-id="${item.id}" />
+                        </td>
+                        <td class="px-6 py-4 text-sm font-semibold text-gray-900 item-total" data-product-id="${item.id}">
+                            {{ $currency_symbol }} ${itemTotal.toFixed(2)}
+                        </td>
+                        <td class="px-6 py-4">
+                            <button class="text-red-600 hover:text-red-800 remove-item" data-product-id="${item.id}">
+                                <i class="lni lni-trash-can text-lg"></i>
+                            </button>
+                        </td>
+                    `;
 
-                    cartItem.querySelector('.quantity-input').addEventListener('change', (e) => {
-                        this.updateQuantity(item.id, parseInt(e.target.value));
-                    });
+                    cartTableBody.appendChild(row);
 
-                    cartItem.querySelector('.remove-item').addEventListener('click', () => {
-                        this.removeFromCart(item.id);
-                    });
+                    // Populate batches for this item (async)
+                    this.loadBatchesForItem(item, row);
 
-                    cartItems.appendChild(clone);
+                    // Track the last added row (most recent item)
+                    if (index === this.cart.length - 1) {
+                        lastAddedRow = row;
+                    }
                 });
+
+                // Bind events for all inputs and buttons
+                this.bindCartEvents();
+
+                // Focus on qty input of newly added item
+                if (focusOnNewItem && lastAddedRow) {
+                    const qtyInput = lastAddedRow.querySelector('.qty-input');
+                    if (qtyInput) {
+                        setTimeout(() => {
+                            qtyInput.focus();
+                            qtyInput.select();
+                        }, 100);
+                    }
+                }
+            }
+
+            bindCartEvents() {
+                // Quantity inputs
+                document.querySelectorAll('.qty-input').forEach(input => {
+                    const commitQty = (el) => {
+                        const productId = el.dataset.productId;
+                        const row = el.closest('tr');
+                        const item = this.cart.find(i => String(i.id) === String(productId));
+                        if (!item) return;
+                        let newQty = parseInt(el.value) || 1;
+                        if (newQty < 1) newQty = 1;
+                        if (item.stock && newQty > item.stock) {
+                            this.showNotification('Insufficient stock!', 'error');
+                            newQty = item.stock;
+                        }
+                        el.value = newQty;
+                        item.quantity = newQty;
+                        const cell = row.querySelector('.item-total');
+                        if (cell) cell.textContent = `${CURRENCY_SYMBOL} ${(item.price * item.quantity).toFixed(2)}`;
+                        this.saveCartToStorage();
+                        this.calculateTotals();
+                    };
+
+                    input.addEventListener('input', (e) => commitQty(e.target));
+                    input.addEventListener('change', (e) => commitQty(e.target));
+
+                    // Keyboard navigation and delete
+                    input.addEventListener('keydown', (e) => {
+                        const productId = e.target.dataset.productId;
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            commitQty(e.target);
+                            const row = e.target.closest('tr');
+                            const batchSelect = row.querySelector('.batch-select');
+                            if (batchSelect && batchSelect.querySelector('option:not([value=""])')) {
+                                batchSelect.focus();
+                            } else {
+                                // const rateInput = row.querySelector('.rate-input');
+                                // if (rateInput) rateInput.focus();
+
+                                const searchInput = document.getElementById('productSearch');
+                                if (searchInput) {
+                                    searchInput.focus();
+                                    searchInput.select();
+                                }
+
+                            }
+                        } else if (e.key === 'Delete' || (e.key === 'Backspace' && e.ctrlKey)) {
+                            e.preventDefault();
+                            this.removeFromCart(productId);
+                        }
+                    });
+                });
+
+                // Batch selects
+                document.querySelectorAll('.batch-select').forEach(select => {
+                    select.addEventListener('change', (e) => {
+                        const productId = e.target.dataset.productId;
+                        const item = this.cart.find(i => String(i.id) === String(productId));
+                        if (item) {
+                            item.batchId = e.target.value || null;
+                            this.saveCartToStorage();
+                        }
+                    });
+                    select.addEventListener('keydown', (e) => {
+                        const productId = e.target.dataset.productId;
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const row = e.target.closest('tr');
+                            // const rateInput = row.querySelector('.rate-input');
+                            // if (rateInput) rateInput.focus();
+                        } else if (e.key === 'Delete' || (e.key === 'Backspace' && e.ctrlKey)) {
+                            e.preventDefault();
+                            this.removeFromCart(productId);
+                        }
+                    });
+                });
+
+                // Rate inputs
+                document.querySelectorAll('.rate-input').forEach(input => {
+                    const commitRate = (el) => {
+                        const productId = el.dataset.productId;
+                        const row = el.closest('tr');
+                        const item = this.cart.find(i => String(i.id) === String(productId));
+                        if (!item) return;
+                        item.price = parseFloat(el.value) || 0;
+                        const cell = row.querySelector('.item-total');
+                        if (cell) cell.textContent = `${CURRENCY_SYMBOL} ${(item.price * item.quantity).toFixed(2)}`;
+                        this.saveCartToStorage();
+                        this.calculateTotals();
+                    };
+
+                    input.addEventListener('input', (e) => commitRate(e.target));
+                    input.addEventListener('change', (e) => commitRate(e.target));
+
+                    input.addEventListener('keydown', (e) => {
+                        const productId = e.target.dataset.productId;
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            commitRate(e.target);
+                            this.focusSearch();
+                        } else if (e.key === 'Delete' || (e.key === 'Backspace' && e.ctrlKey)) {
+                            e.preventDefault();
+                            this.removeFromCart(productId);
+                        }
+                    });
+                });
+
+                // Remove buttons
+                document.querySelectorAll('.remove-item').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const productId = e.currentTarget.dataset.productId;
+                        this.removeFromCart(productId);
+                    });
+                });
+            }
+
+            focusSearch()
+            {
+                const searchInput = document.getElementById('productSearch');
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                }
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // Populate batch select for a cart item
+            async loadBatchesForItem(item, row) {
+                try {
+                    const select = row.querySelector('.batch-select');
+                    if (!select) return;
+                    // If already populated (more than placeholder), skip
+                    if (select.options.length > 1) return;
+
+                    const res = await fetch(`/inventory/api/${item.id}/batches/list`, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    const batches = Array.isArray(data?.batches) ? data.batches : (Array.isArray(data) ? data : []);
+                    console.log("batches", batches);
+
+                    if (batches.length) {
+                        select.innerHTML = '<option value="">Select</option>';
+                        batches.forEach(b => {
+                            const opt = document.createElement('option');
+                            opt.value = b.id ?? b.batch_id ?? b.code ?? '';
+                            const labelParts = [];
+                            if (b.code || b.batch_number) labelParts.push(b.code || b.batch_number);
+                            if (b.expiry) labelParts.push(`Exp ${b.expiry}`);
+                            const stock = (b.stock ?? b.qty);
+                            if (stock != null) labelParts.push(`Stock ${stock}`);
+                            opt.textContent = labelParts.join(' • ') || 'Batch';
+                            select.appendChild(opt);
+                        });
+                        if (item.batchId) select.value = item.batchId;
+                    }
+                } catch (e) {
+                    console.warn('Failed loading batches for', item.id, e);
+                }
             }
 
             calculateTotals() {
@@ -863,14 +903,14 @@
 
                 const total = Math.max(0, subtotal + tax - discount);
 
-                document.getElementById('subtotal').textContent = `Rs. ${subtotal.toFixed(2)}`;
-                document.getElementById('tax').textContent = `Rs. ${tax.toFixed(2)}`;
-                document.getElementById('total').textContent = `Rs. ${total.toFixed(2)}`;
+                document.getElementById('subtotal').textContent = `${CURRENCY_SYMBOL} ${subtotal.toFixed(2)}`;
+                document.getElementById('tax').textContent = `${CURRENCY_SYMBOL} ${tax.toFixed(2)}`;
+                document.getElementById('total').textContent = `${CURRENCY_SYMBOL} ${total.toFixed(2)}`;
 
                 // Show/hide discount amount
                 if (discount > 0) {
                     document.getElementById('discountAmount').style.display = 'flex';
-                    document.getElementById('discountValue').textContent = `-Rs. ${discount.toFixed(2)}`;
+                    document.getElementById('discountValue').textContent = `-${CURRENCY_SYMBOL} ${discount.toFixed(2)}`;
                 } else {
                     document.getElementById('discountAmount').style.display = 'none';
                 }
@@ -917,7 +957,7 @@
 
                 this.calculateTotals();
                 if (this.discountValue > 0) {
-                    this.showNotification(`Discount of ${this.discountType === 'percentage' ? this.discountValue + '%' : 'Rs. ' + this.discountValue} applied`, 'success');
+                    this.showNotification(`Discount of ${this.discountType === 'percentage' ? this.discountValue + '%' : `${CURRENCY_SYMBOL} ` + this.discountValue} applied`, 'success');
                 }
             }
 
@@ -956,11 +996,11 @@
                 const modal = document.getElementById('paymentModal');
                 const total = this.calculateTotal();
 
-                document.getElementById('modalTotal').textContent = `Rs. ${total.toFixed(2)}`;
+                document.getElementById('modalTotal').textContent = `${CURRENCY_SYMBOL} ${total.toFixed(2)}`;
                 document.getElementById('modalItemCount').textContent = `${this.cart.length} item${this.cart.length > 1 ? 's' : ''}`;
                 document.getElementById('modalPaymentMethod').textContent = this.paymentMethod.charAt(0).toUpperCase() + this.paymentMethod.slice(1);
                 document.getElementById('amountReceived').value = '';
-                document.getElementById('changeAmount').textContent = 'Rs. 0.00';
+                document.getElementById('changeAmount').textContent = `${CURRENCY_SYMBOL} 0.00`;
 
                 modal.style.display = 'flex';
                 setTimeout(() => modal.querySelector('.bg-white').classList.add('scale-100'), 10);
@@ -975,7 +1015,7 @@
                 const total = this.calculateTotal();
                 const received = parseFloat(document.getElementById('amountReceived').value) || 0;
                 const change = Math.max(0, received - total);
-                document.getElementById('changeAmount').textContent = `Rs. ${change.toFixed(2)}`;
+                document.getElementById('changeAmount').textContent = `${CURRENCY_SYMBOL} ${change.toFixed(2)}`;
             }
 
             async confirmSale() {
@@ -1085,20 +1125,22 @@
             // }
 
             filterProducts(searchTerm) {
-                const products = document.querySelectorAll('.product-card');
-                const term = searchTerm.toLowerCase();
+                // const products = document.querySelectorAll('.product-card');
+                // const term = searchTerm.toLowerCase();
 
-                products.forEach(product => {
-                    const name = product.dataset.productName.toLowerCase();
-                    const category = product.dataset.productCategory || '';
-                    const unit = (product.dataset.productUnit).toLowerCase() || '';
+                /*
+                                products.forEach(product => {
+                                    const name = product.dataset.productName.toLowerCase();
+                                    const category = product.dataset.productCategory || '';
+                                    const unit = (product.dataset.productUnit).toLowerCase() || '';
 
-                    console.log("category", unit, this.currentCategory);
-                    const matchesSearch = !term || name.includes(term);
-                    const matchesCategory = this.currentCategory === 'all' || unit === this.currentCategory;
+                                    console.log("category", unit, this.currentCategory);
+                                    const matchesSearch = !term || name.includes(term);
+                                    const matchesCategory = this.currentCategory === 'all' || unit === this.currentCategory;
 
-                    product.style.display = (matchesSearch && matchesCategory) ? 'block' : 'none';
-                });
+                                    product.style.display = (matchesSearch && matchesCategory) ? 'block' : 'none';
+                                });
+                */
             }
 
             filterByCategory(category) {
@@ -1161,94 +1203,6 @@
                     notification.style.animation = 'slideOutRight 0.3s ease-in';
                     setTimeout(() => notification.remove(), 300);
                 }, 3000);
-            }
-
-            showShortcutsModal() {
-                const modal = document.getElementById('shortcutsModal');
-                modal.style.display = 'flex';
-            }
-
-            hideShortcutsModal() {
-                const modal = document.getElementById('shortcutsModal');
-                modal.style.display = 'none';
-            }
-
-            showScannerModal() {
-                const modal = document.getElementById('scannerModal');
-                const input = document.getElementById('barcodeInput');
-                const resultArea = document.getElementById('scanResultArea');
-                const errorArea = document.getElementById('scanErrorArea');
-
-                // Reset modal state
-                input.value = '';
-                resultArea.classList.add('hidden');
-                errorArea.classList.add('hidden');
-
-                modal.style.display = 'flex';
-                setTimeout(() => input.focus(), 100);
-            }
-
-            hideScannerModal() {
-                const modal = document.getElementById('scannerModal');
-                modal.style.display = 'none';
-            }
-
-            processBarcodeInput() {
-                const input = document.getElementById('barcodeInput');
-                const barcode = input.value.trim();
-
-                if (!barcode) {
-                    this.showNotification('Please enter a barcode', 'error');
-                    return;
-                }
-
-                this.searchProductByBarcode(barcode);
-            }
-
-            searchProductByBarcode(barcode) {
-                const resultArea = document.getElementById('scanResultArea');
-                const errorArea = document.getElementById('scanErrorArea');
-                const input = document.getElementById('barcodeInput');
-
-                // Search for product by barcode in the product cards
-                const products = document.querySelectorAll('.product-card');
-                let found = false;
-
-                products.forEach(product => {
-                    // Check if product has a barcode data attribute or if the barcode matches the product ID
-                    const productBarcode = product.dataset.productBarcode || product.dataset.productId;
-                    const productName = product.dataset.productName;
-
-                    if (productBarcode === barcode || productName.toLowerCase().includes(barcode.toLowerCase())) {
-                        // Product found - add to cart
-                        this.addToCart(product.dataset);
-
-                        // Show success feedback
-                        document.getElementById('scannedProductName').textContent = productName;
-                        resultArea.classList.remove('hidden');
-                        errorArea.classList.add('hidden');
-
-                        found = true;
-
-                        // Auto-close modal after 1.5 seconds
-                        setTimeout(() => {
-                            this.hideScannerModal();
-                        }, 1500);
-                    }
-                });
-
-                if (!found) {
-                    // Product not found
-                    document.getElementById('failedBarcode').textContent = barcode;
-                    errorArea.classList.remove('hidden');
-                    resultArea.classList.add('hidden');
-
-                    // Clear input and refocus
-                    setTimeout(() => {
-                        input.value = '';
-                        input.focus();
-                    }, 1500);
-                }
             }
 
             saveCartToStorage() {
@@ -1531,7 +1485,7 @@
                         ${held.customer_name ? `<p class="text-sm text-gray-600">Customer: ${held.customer_name}</p>` : ''}
                     </div>
                     <div class="text-right">
-                        <p class="text-lg font-bold text-gray-900">Rs. ${parseFloat(held.total_amount).toFixed(2)}</p>
+                        <p class="text-lg font-bold text-gray-900">${CURRENCY_SYMBOL} ${parseFloat(held.total_amount).toFixed(2)}</p>
                         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${held.is_expired ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
                             ${held.is_expired ? 'Expired' : 'Active'}
                         </span>
@@ -1540,7 +1494,7 @@
 
                 <div class="grid grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
                     <div>Items: ${held.cart_data.cart.length}</div>
-                    <div>Subtotal: Rs. ${parseFloat(held.subtotal).toFixed(2)}</div>
+                    <div>Subtotal: ${CURRENCY_SYMBOL} ${parseFloat(held.subtotal).toFixed(2)}</div>
                 </div>
 
                 <div class="flex justify-between items-center">
@@ -1576,15 +1530,77 @@
                 document.getElementById('holdManagementModal').classList.add('hidden');
                 document.body.style.overflow = 'auto';
             }
+
+            async allocateBatches(productId, qty) {
+                const res = await fetch('/api/pos/allocate-batches', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({product_id: productId, qty})
+                });
+
+
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error('Allocation failed: ' + text);
+                }
+                return await res.json();
+            }
+        }
+
+        // updateCartLineAllocation updates the cart line and UI
+        async function updateCartLineAllocation(cartLine, qty) {
+            try {
+                const {allocations, remaining} = await this.allocateBatches(cartLine.product_id, qty);
+                cartLine.allocations = allocations;
+                cartLine.allocatedRemaining = remaining; // if you want to show that
+                // this.renderCart();
+            } catch (err) {
+                console.error(err);
+                // optionally show user a warning
+            }
+        }
+
+        const debouncedUpdate = debounce((cartLine, qty) => updateCartLineAllocation(cartLine, qty), 300);
+
+        /*if (document.querySelectorAll('.qty-input')) document.querySelectorAll('.qty-input').forEach((input) => {
+            input.addEventListener('change', function (e) {
+                // onQtyChange(this.cart, )
+                console.log('quantity', e.target.value);
+            });
+
+        });*/
+
+        // Call this when qty changes (input handler or +/- buttons)
+        /*function onQtyChange(cartLine, newQty) {
+            cartLine.qty = newQty;
+            // immediate small UI update (optimistic)
+            renderCartLine(cartLine);
+            // update allocations but debounced
+            debouncedUpdate(cartLine, newQty);
+        }*/
+
+        // simple debounce helper
+        function debounce(fn, wait = 300) {
+            let t;
+            return (...args) => {
+                clearTimeout(t);
+                t = setTimeout(() => fn(...args), wait);
+            };
         }
 
 
         // Initialize POS when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            this.posCart = new POSCart();
+            window.posCart = new POSCart();
         });
 
-        document.getElementById('lastReceiptBtn').addEventListener('click', () => {
+        document.getElementById('lastReceiptBtn').addEventListener('click', getLastReceipt);
+
+        function getLastReceipt() {
             const lastReceipt = localStorage.getItem('lastReceipt');
             if (lastReceipt) {
                 const receipt = JSON.parse(lastReceipt);
@@ -1593,16 +1609,20 @@
             } else {
                 this.showNotification('No recent receipt found!', 'error');
             }
-        });
+        }
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 'Enter') {
-                // completeSale();
-                const postCart = new POSCart();
-                postCart.showPaymentModal();
-                // e.preventDefault();
-                // document.querySelector('.complete-sale-btn').click();
+                window.posCart.showPaymentModal();
+                setTimeout(() => {
+                    document.querySelector('#amountReceived').focus();
+                }, 100);
+            }
+            if (e.key === 'Escape') {
+                setTimeout(() => {
+                    document.querySelector('#cancelPayment').click();
+                }, 100);
             }
             if (e.ctrlKey && e.key === 'Delete') {
                 e.preventDefault();
@@ -1614,21 +1634,387 @@
             }
             if (e.ctrlKey && e.key === 'h') {
                 e.preventDefault();
-                document.getElementById('hold-sale-btn').click();
-            }
-            if (e.ctrlKey && e.key === 'b') {
-                e.preventDefault();
-                document.getElementById('scanBarcodeBtn').click();
-            }
-            // ESC key to close scanner modal
-            if (e.key === 'Escape') {
-                const scannerModal = document.getElementById('scannerModal');
-                if (scannerModal && scannerModal.style.display === 'flex') {
-                    scannerModal.style.display = 'none';
-                }
+                document.getElementById('holdInvoiceBtn').click();
             }
         });
     </script>
+
+
+    <script>
+        (function () {
+            /* ====== Config ====== */
+            const cfg = {
+                selectors: {
+                    productSearch: '#productSearch',
+                    productResults: '#productResults',
+                    productDetailsModal: '#productDetailsModal',
+                    modalQuantity: '#modalQuantity',
+                    modalBatch: '#modalBatch',
+                    modalRate: '#modalRate',
+                    completeSaleBtn: '.complete-sale-btn',
+                    holdInvoiceBtn: '#holdInvoiceBtn',
+                    lastReceiptBtn: '#lastReceiptBtn',
+                    heldSalesBtn: '#lastReceiptBtn',
+                    customerName: '#customerName',
+                    amountReceived: '#amountReceived'
+                },
+                searchDebounceMs: 120
+            };
+
+            /* ====== Utility helpers ====== */
+            const $ = s => document.querySelector(s);
+            const $$ = s => Array.from(document.querySelectorAll(s));
+
+            function on(el, ev, fn) {
+                if (!el) return;
+                el.addEventListener(ev, fn);
+            }
+
+            function preventDefault(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            /* ====== Keyboard hotkeys ====== */
+            const hotkeys = {
+                F1: () => focusProductSearch(),
+                F2: () => {
+                    const el = $(cfg.selectors.customerName);
+                    if (el) {
+                        el.focus();
+                        el.select();
+                    }
+                },
+                F3: () => {
+                    const hold = $(cfg.selectors.holdInvoiceBtn);
+                    if (hold) hold.click();
+                },
+                F4: () => {
+                    const recall = $(cfg.selectors.lastReceiptBtn);
+                    if (recall) recall.click();
+                },
+                F7: () => toggleDiscountFocus(),
+                F8: () => removeSelectedCartRow(),
+                'Ctrl+Enter': () => {
+                    const btn = $(cfg.selectors.completeSaleBtn);
+                    if (btn) btn.click();
+                }
+            };
+
+            function focusProductSearch() {
+                const el = $(cfg.selectors.productSearch);
+                if (el) {
+                    el.focus();
+                    el.select();
+                }
+            }
+
+            function toggleDiscountFocus() {
+                // If you have discount input give it id discountInput
+                const d = document.getElementById('discountInput');
+                if (d) {
+                    d.focus();
+                    d.select();
+                }
+            }
+
+            function showHoldSaleModal()
+            {
+                this.loadHeldSales();
+                document.getElementById('holdManagementModal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function removeSelectedCartRow() {
+                const active = document.activeElement;
+                if (active && active.dataset && active.dataset.posRole === 'cart-row') {
+                    // remove the row
+                    const row = active;
+                    const removeBtn = row.querySelector('[data-pos-action="remove"]');
+                    if (removeBtn) removeBtn.click();
+                    else row.remove();
+                    // move focus to next row or search
+                    const next = row.nextElementSibling || row.previousElementSibling;
+                    if (next) setActiveCartRow(next);
+                    else focusProductSearch();
+                }
+            }
+
+            /* ====== Intercept keys globally ====== */
+            document.addEventListener('keydown', function (e) {
+                // compose key string
+                const key = (e.ctrlKey ? 'Ctrl+' : '') + (e.key.length === 1 ? e.key : e.key);
+                // Cancel browser default for some keys
+                if (['F1', 'F2', 'F3', 'F4', 'F6', 'F7', 'F8'].includes(e.key)) {
+                    preventDefault(e);
+                }
+                // Hotkey mapping
+                if (e.key === 'F1') {
+                    hotkeys.F1();
+                }
+                if (e.key === 'F2') {
+                    hotkeys.F2();
+                }
+                if (e.key === 'F3') {
+                    hotkeys.F3();
+                }
+                if (e.key === 'F4') {
+                    hotkeys.F4();
+                }
+                if (e.key === 'F6') {
+                    hotkeys.F6();
+                }
+                if (e.key === 'F7') {
+                    hotkeys.F7();
+                }
+                if (e.key === 'F8') {
+                    hotkeys.F8();
+                }
+                if (e.key === 'Enter' && e.ctrlKey) {
+                    hotkeys['Ctrl+Enter']();
+                }
+                // Open help with '?'
+                if (e.key === '?') {
+                    toggleHotkeyHelp();
+                }
+            });
+
+            /* ====== Search Autocomplete with keyboard nav ====== */
+            const searchEl = $(cfg.selectors.productSearch);
+            const resultsEl = $(cfg.selectors.productResults);
+            let debounceTimer = null;
+            let cachedResults = {}; // map term -> results
+            let results = [];       // current results array
+            let highlightedIndex = -1;
+
+            if (searchEl && resultsEl) {
+                on(searchEl, 'input', (e) => {
+                    clearTimeout(debounceTimer);
+                    const term = e.target.value.trim();
+                    debounceTimer = setTimeout(() => performSearch(term), cfg.searchDebounceMs);
+                });
+
+                on(searchEl, 'keydown', (e) => {
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        if (results.length) highlightResult(Math.min(results.length - 1, highlightedIndex + 1));
+                        else { /* no results */
+                        }
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        highlightResult(Math.max(0, highlightedIndex - 1));
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (highlightedIndex >= 0) selectResult(results[highlightedIndex]);
+                        else if (results.length === 1) selectResult(results[0]);
+                    } else if (e.key === 'Escape') {
+                        clearResults();
+                    }
+                });
+
+                // click handlers on results (mouse allowed but not necessary)
+                resultsEl.addEventListener('click', (ev) => {
+                    const opt = ev.target.closest('[data-pos-role="product-option"]');
+                    if (opt) {
+                        const idx = parseInt(opt.dataset.idx, 10);
+                        selectResult(results[idx]);
+                    }
+                });
+            }
+
+            let currentProduct = null; // Store currently selected product
+
+            function performSearch(term) {
+                if (!term) return clearResults();
+                if (cachedResults[term]) {
+                    renderResults(cachedResults[term]);
+                    return;
+                }
+                fetch(`/pos/search?q=${encodeURIComponent(term)}`)
+                    .then(r => r.json()).then(data => {
+                    cachedResults[term] = data;
+                    renderResults(data);
+                }).catch(err => {
+                    console.error('search failed', err);
+                });
+            }
+
+            function renderResults(items) {
+                results = items || [];
+                highlightedIndex = results.length ? 0 : -1;
+                resultsEl.innerHTML = results.map((it, idx) => {
+                    const escaped = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+                    const isHighlighted = idx === highlightedIndex;
+                    return `<li role="option" tabindex="-1" data-pos-role="product-option" data-idx="${idx}"
+                          class="px-2 py-1 cursor-pointer ${isHighlighted ? 'bg-blue-100' : 'hover:bg-gray-100'}" aria-selected="${isHighlighted}">
+                        <div class="text-sm">${escaped(it.name)} <small class="opacity-70">[${escaped(it.sku || '')}]</small></div>
+                        <div class="text-xs opacity-60">Price: ${it.price} | Stock: ${it.stock}</div>
+                      </li>`;
+                }).join('');
+                // Keep focus on search input for keyboard flow
+            }
+
+            function highlightResult(idx) {
+                if (!results.length) return;
+                highlightedIndex = idx;
+                Array.from(resultsEl.children).forEach((c, i) => {
+                    c.setAttribute('aria-selected', i === idx ? 'true' : 'false');
+                    if (i === idx) {
+                        c.classList.add('bg-blue-100');
+                        c.classList.remove('hover:bg-gray-100');
+                        c.scrollIntoView({block: 'nearest', behavior: 'smooth'});
+                    } else {
+                        c.classList.remove('bg-blue-100');
+                        c.classList.add('hover:bg-gray-100');
+                    }
+                });
+            }
+
+            function selectResult(item) {
+                if (!item) return;
+                clearResults();
+                searchEl.value = ''; // Clear search
+
+                // Add product directly to cart via POSCart instance
+                if (window.posCart) {
+                    window.posCart.addToCart({
+                        productId: item.id,
+                        productName: item.name,
+                        productPrice: item.price,
+                        productStock: item.stock,
+                        productUnit: item.unit || 'units'
+                    });
+                }
+
+                // Return focus to search for next product
+                focusProductSearch();
+            }
+
+            function clearResults() {
+                results = [];
+                resultsEl.innerHTML = '';
+                highlightedIndex = -1;
+            }
+
+            /* ====== Cart roving tabindex logic ====== */
+            const cartBody = $(cfg.selectors.cartBody);
+
+            function setActiveCartRow(row) {
+                if (!row) return;
+                // remove old
+                $$(cfg.selectors.cartBody + ' [data-pos-role="cart-row"]').forEach(r => {
+                    r.setAttribute('tabindex', '-1');
+                });
+                row.setAttribute('tabindex', '0');
+                row.focus();
+            }
+
+            function attachCartRowKeyboard(row) {
+                row.setAttribute('data-pos-role', 'cart-row');
+                row.setAttribute('tabindex', '-1'); // default -1
+                row.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        const next = row.nextElementSibling;
+                        if (next) setActiveCartRow(next);
+                    }
+                    if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const prev = row.previousElementSibling;
+                        if (prev) setActiveCartRow(prev); else focusProductSearch();
+                    }
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        editCartRowQty(row);
+                    }
+                    if (e.key === 'Delete' || (e.key === 'Backspace' && e.shiftKey)) {
+                        e.preventDefault();
+                        removeRow(row);
+                    }
+                    if (e.key === 'Escape') {
+                        focusProductSearch();
+                    }
+                });
+            }
+
+            function addToCart(item, qty) {
+                // Basic DOM row creation; adapt to your actual cart data model & backend
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                  <td>${item.sku || ''}</td>
+                  <td>${item.name}</td>
+                  <td><span data-pos-field="qty">${qty}</span></td>
+                  <td>${item.price}</td>
+                  <td><button data-pos-action="remove" class="btn">Del</button></td>
+                `;
+                cartBody.appendChild(tr);
+                attachCartRowKeyboard(tr);
+                // set this new row active
+                setActiveCartRow(tr);
+                // update totals (you should implement recalc)
+                recalcTotals();
+            }
+
+            function editCartRowQty(row) {
+                const qtySpan = row.querySelector('[data-pos-field="qty"]');
+                if (!qtySpan) return;
+                const current = qtySpan.textContent.trim();
+                const newQty = prompt('Edit qty', current);
+                if (newQty !== null) {
+                    qtySpan.textContent = parseFloat(newQty) || current;
+                    recalcTotals();
+                }
+            }
+
+            function removeRow(row) {
+                const next = row.nextElementSibling || row.previousElementSibling;
+                row.remove();
+                if (next) setActiveCartRow(next);
+                else focusProductSearch();
+                recalcTotals();
+            }
+
+            function recalcTotals() {
+                // implement your total, tax, discounts updates (server or client)
+                // example: sum qty * price
+                // After recalculation, focus remains where it should be.
+            }
+
+            /* ====== Modal focus trap (generic) ====== */
+            function trapFocus(modalEl) {
+                const focusable = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+                const nodes = Array.from(modalEl.querySelectorAll(focusable)).filter(n => !n.disabled);
+                if (!nodes.length) return;
+                const first = nodes[0], last = nodes[nodes.length - 1];
+
+                function keyHandler(e) {
+                    if (e.key !== 'Tab') return;
+                    if (e.shiftKey && document.activeElement === first) {
+                        e.preventDefault();
+                        last.focus();
+                    } else if (!e.shiftKey && document.activeElement === last) {
+                        e.preventDefault();
+                        first.focus();
+                    }
+                }
+
+                modalEl.addEventListener('keydown', keyHandler);
+                // cleanup should remove this handler when modal closes
+            }
+
+            /* ====== Hotkey help toggle ====== */
+            function toggleHotkeyHelp() {
+                const el = document.getElementById('posHotkeys');
+                if (!el) return;
+                el.style.display = el.style.display === 'none' ? 'block' : 'none';
+            }
+
+            // initial focus
+            focusProductSearch();
+
+        })();
+    </script>
+
 
     <style>
         @keyframes slideInRight {
@@ -1686,6 +2072,51 @@
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+
+        /* Product Search Results Dropdown */
+        #productResults {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 400px;
+            overflow-y: auto;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            margin-top: 8px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            z-index: 50;
+            list-style: none;
+            padding: 0;
+        }
+
+        #productResults:empty {
+            display: none;
+        }
+
+        #productResults li {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        #productResults li:last-child {
+            border-bottom: none;
+        }
+
+        #productResults li:hover,
+        #productResults li[aria-selected="true"] {
+            background-color: #eff6ff;
+            color: #1e40af;
+        }
+
+        #productResults li:focus {
+            outline: none;
+            background-color: #dbeafe;
+            color: #1e3a8a;
         }
     </style>
 @endpush

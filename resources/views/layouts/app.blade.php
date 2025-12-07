@@ -35,41 +35,6 @@
 
     <!-- Main Content -->
     <main class="flex-1 overflow-auto transition-all duration-300" :class="{ 'ml-0': !sidebarOpen || isMobile, 'ml-0': sidebarOpen && !isMobile }">
-        <!-- Top Bar -->
-        {{--<header class="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 sticky top-0 z-40">
-            <div class="flex-1 max-w-xl">
-                <div class="relative">
-                    <i class="lni lni-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text"
-                           placeholder="Search..."
-                           class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50">
-                </div>
-            </div>
-
-            <div class="flex items-center space-x-4">
-                <button class="relative p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors">
-                    <x-ui.icon name="bell"></x-ui.icon>
-                    <span class="absolute top-1 right-1 w-2 h-2 bg-danger-500 rounded-full"></span>
-                </button>
-
-                <x-ui.button
-                    variant="primary"
-                    icon="lni lni-plus"
-                    href="{{ route('pos.index') }}">
-                    New Sale
-                </x-ui.button>
-
-                <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
-                        <span class="text-white font-semibold text-sm">P</span>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-sm font-medium text-gray-900 capitalize">{{optional(Auth()->user()->role)->name}}</p>
-                        <p class="text-xs text-gray-500">{{optional(Auth()->user())->name}}</p>
-                    </div>
-                </div>
-            </div>
-        </header>--}}
         <header class="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 sticky top-0 z-40">
             <div class="flex items-center space-x-4 flex-1 max-w-xl">
                 <!-- Sidebar Toggle Button -->
@@ -78,12 +43,6 @@
                     <i class="lni text-xl" :class="sidebarOpen ? 'lni-menu' : 'lni-menu'"></i>
                 </button>
 
-                {{--<div class="relative flex-1 md:flex">
-                    <i class="lni lni-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text"
-                           placeholder="Search..."
-                           class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50">
-                </div>--}}
             </div>
 
             <div class="flex items-center space-x-4">
@@ -127,11 +86,13 @@
                         </a>
 
                         <!-- Settings -->
-                        <a href="{{ route('settings.system') }}"
-                           class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                            <i class="lni lni-cog mr-3 text-gray-400"></i>
-                            <span>Settings</span>
-                        </a>
+                        @hasPermission('settings.view')
+                            <a href="{{ route('settings.system') }}"
+                               class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                <i class="lni lni-cog mr-3 text-gray-400"></i>
+                                <span>Settings</span>
+                            </a>
+                        @endhasPermission
 
                         <!-- Divider -->
                         <div class="border-t border-gray-100 my-1"></div>
@@ -159,5 +120,43 @@
 
 <!-- Stack for scripts -->
 @stack('scripts')
+
+<script>
+    window.showNotification = function(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.style.cssText = 'z-index: 9999; animation: slideInRight 0.3s ease-out;';
+        notification.className = `fixed top-4 right-4 p-4 rounded-xl shadow-2xl text-white font-semibold flex items-center space-x-3 transform transition-all ${
+            type === 'success' ? 'bg-gradient-to-r from-green-500 to-green-600' :
+                type === 'error' ? 'bg-gradient-to-r from-red-500 to-red-600' :
+                    'bg-gradient-to-r from-blue-500 to-blue-600'
+        }`;
+
+        const icon = type === 'success' ? 'checkmark-circle' :
+            type === 'error' ? 'close-circle' : 'information';
+
+        notification.innerHTML = `
+            <i class="lni lni-${icon} text-2xl"></i>
+            <span>${message}</span>
+        `;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    };
+</script>
+
+@if(session('success'))
+    <script>showNotification("{{ session('success') }}", "success");</script>
+@endif
+@if(session('error'))
+    <script>showNotification("{{ session('error') }}", "error");</script>
+@endif
+
+@if(session('info'))
+    <script>showNotification("{{ session('info') }}", "info");</script>
+@endif
 </body>
 </html>

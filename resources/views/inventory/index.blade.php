@@ -8,11 +8,13 @@
                 <h1 class="text-3xl font-bold text-gray-900">Inventory Management</h1>
                 <p class="text-gray-600 mt-1">Manage products, stock levels, and batches</p>
             </div>
-            <a href="{{ route('inventory.create') }}"
-               class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center">
-                <i class="lni lni-plus mr-2"></i>
-                Add New Product
-            </a>
+            @hasPermission('inventory.create')
+                <a href="{{ route('inventory.create') }}"
+                   class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center">
+                    <i class="lni lni-plus mr-2"></i>
+                    Add New Product
+                </a>
+            @endhasPermission
         </div>
 
         <!-- Filters -->
@@ -188,7 +190,7 @@
                                     <div class="text-xs text-gray-500">{{ count($product->activeBatches) }} batches</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    Rs. {{ number_format($product->price, 2) }}
+                                    {{ $currency_symbol }} {{ number_format($product->price, 2) }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @if($product->stock == 0)
@@ -226,21 +228,25 @@
                                                 class="text-blue-600 hover:text-blue-900 flex items-center text-sm">
                                             <i class="lni lni-eye mr-1"></i> Batches
                                         </a>
-                                        <a href="{{ route('inventory.edit', $product) }}"
-                                           class="text-green-600 hover:text-green-900 flex items-center text-sm">
-                                            <i class="lni lni-pencil mr-1"></i> Edit
-                                        </a>
-                                        <form action="{{ route('inventory.destroy', $product) }}"
-                                              method="POST"
-                                              class="inline"
-                                              onsubmit="return confirm('Are you sure you want to delete this product?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                    class="text-red-600 hover:text-red-900 flex items-center text-sm">
-                                                <i class="lni lni-trash-can mr-1"></i> Delete
-                                            </button>
-                                        </form>
+                                        @hasPermission('inventory.edit')
+                                            <a href="{{ route('inventory.edit', $product) }}"
+                                               class="text-green-600 hover:text-green-900 flex items-center text-sm">
+                                                <i class="lni lni-pencil mr-1"></i> Edit
+                                            </a>
+                                        @endhasPermission
+                                        @hasPermission('inventory.delete')
+                                            <form action="{{ route('inventory.destroy', $product) }}"
+                                                  method="POST"
+                                                  class="inline"
+                                                  onsubmit="return confirm('Are you sure you want to delete this product?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                        class="text-red-600 hover:text-red-900 flex items-center text-sm">
+                                                    <i class="lni lni-trash-can mr-1"></i> Delete
+                                                </button>
+                                            </form>
+                                        @endhasPermission
                                     </div>
                                 </td>
                             </tr>

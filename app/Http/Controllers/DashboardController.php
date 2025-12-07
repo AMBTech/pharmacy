@@ -47,7 +47,7 @@ class DashboardController extends Controller
 
         $lowStockAlerts = Product::with('category')
             ->where('stock', '<', 10)
-            ->where('stock', '>', 0)
+//            ->where('stock', '>', 0)
             ->orderBy('stock')
             ->limit(5)
             ->get();
@@ -59,6 +59,9 @@ class DashboardController extends Controller
             ->orderBy('expiry_date')
             ->limit(5)
             ->get();
+
+        $currency_symbol = get_currency_symbol();
+
 
         return view('dashboard', compact(
             'todaySales',
@@ -73,7 +76,8 @@ class DashboardController extends Controller
             'recentSales',
             'recentProducts',
             'lowStockAlerts',
-            'expiringProducts'
+            'expiringProducts',
+            'currency_symbol'
         ));
     }
 }

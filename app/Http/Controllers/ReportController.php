@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\InventoryExport;
 use App\Models\Category;
 use App\Models\Sale;
 use App\Models\Product;
@@ -24,12 +25,15 @@ class ReportController extends Controller
         $lowStockProducts = Product::where('stock', '<', 10)->where('stock', '>', 0)->count();
         $expiringSoon = ProductBatch::where('expiry_date', '<=', now()->addDays(30))->count();
 
+        $currency_symbol = get_currency_symbol();
+
         return view('reports.index', compact(
             'todaySales',
             'monthSales',
             'totalProducts',
             'lowStockProducts',
-            'expiringSoon'
+            'expiringSoon',
+            'currency_symbol'
         ));
     }
 
@@ -41,8 +45,9 @@ class ReportController extends Controller
         $salesData = $this->getSalesTrendsData($period, $days);
         $topProducts = $this->getTopProducts(10);
         $paymentMethods = $this->getPaymentMethodDistribution();
+        $currency_symbol = get_currency_symbol();
 
-        return view('reports.sales-trends', compact('salesData', 'topProducts', 'paymentMethods', 'period', 'days'));
+        return view('reports.sales-trends', compact('salesData', 'topProducts', 'paymentMethods', 'period', 'days', 'currency_symbol'));
     }
 
     public function inventory(Request $request)
@@ -195,8 +200,9 @@ class ReportController extends Controller
         $profitLossData = $this->getProfitLossData($startDate, $endDate);
         $revenueExpenses = $this->getRevenueExpensesTrend($startDate, $endDate);
         $profitByCategory = $this->getProfitByCategory($startDate, $endDate);
+        $currency_symbol = get_currency_symbol();
 
-        return view('reports.profit-loss', compact('profitLossData', 'revenueExpenses', 'profitByCategory', 'startDate', 'endDate'));
+        return view('reports.profit-loss', compact('profitLossData', 'revenueExpenses', 'profitByCategory', 'startDate', 'endDate', 'currency_symbol'));
     }
 
     public function expiringProducts(Request $request)
@@ -377,7 +383,7 @@ class ReportController extends Controller
 
         $cashierPerformance = $this->getCashierPerformance($startDate, $endDate, $cashierId);
         $cashierTrends = $this->getCashierTrends($startDate, $endDate, $cashierId);
-        
+
         // Get all cashiers for the dropdown
         $allCashiers = User::whereHas('sales')
             ->with('role')
@@ -405,8 +411,9 @@ class ReportController extends Controller
         $dailySales = $this->getDailySales($date);
         $hourlySales = $this->getHourlySales($date);
         $topProductsDaily = $this->getTopProductsDaily($date);
+        $currency_symbol = get_currency_symbol();
 
-        return view('reports.daily-sales', compact('dailySales', 'hourlySales', 'topProductsDaily', 'date'));
+        return view('reports.daily-sales', compact('dailySales', 'hourlySales', 'topProductsDaily', 'date', 'currency_symbol'));
     }
 
     // Private methods for data aggregation
@@ -589,12 +596,12 @@ class ReportController extends Controller
         $query = User::whereHas('sales', function ($query) use ($startDate, $endDate) {
             $query->whereBetween('created_at', [$startDate, $endDate]);
         });
-        
+
         // Filter by specific cashier if provided
         if ($cashierId) {
             $query->where('id', $cashierId);
         }
-        
+
         return $query->withCount(['sales as total_sales' => function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('created_at', [$startDate, $endDate]);
             }])
@@ -618,12 +625,12 @@ class ReportController extends Controller
         )
             ->whereBetween('created_at', [$startDate, $endDate])
             ->whereNotNull('cashier_id');
-        
+
         // Filter by specific cashier if provided
         if ($cashierId) {
             $query->where('cashier_id', $cashierId);
         }
-        
+
         return $query->groupBy('cashier_id', 'date')
             ->orderBy('date')
             ->get();
@@ -1000,30 +1007,23 @@ class ReportController extends Controller
 
         $fileName = 'sales-trends-' . $period . '-' . now()->format('Y-m-d');
 
-        switch ($exportType) {
-            case 'excel':
-                return \Excel::download(
-                    new \App\Exports\SalesTrendsExport($salesData, $topProducts, $paymentMethods, $period, $days),
-                    $fileName . '.xlsx'
-                );
-
-            case 'csv':
-                return \Excel::download(
-                    new \App\Exports\SalesTrendsExport($salesData, $topProducts, $paymentMethods, $period, $days),
-                    $fileName . '.csv',
-                    \Maatwebsite\Excel\Excel::CSV
-                );
-
-            case 'pdf':
-                return \Excel::download(
-                    new \App\Exports\SalesTrendsExport($salesData, $topProducts, $paymentMethods, $period, $days),
-                    $fileName . '.pdf',
-                    \Maatwebsite\Excel\Excel::DOMPDF
-                );
-
-            default:
-                return back()->with('error', 'Invalid export type');
-        }
+        return match ($exportType) {
+            'excel' => \Excel::download(
+                new \App\Exports\SalesTrendsExport($salesData, $topProducts, $paymentMethods, $period, $days),
+                $fileName . '.xlsx'
+            ),
+            'csv' => \Excel::download(
+                new \App\Exports\SalesTrendsExport($salesData, $topProducts, $paymentMethods, $period, $days),
+                $fileName . '.csv',
+                \Maatwebsite\Excel\Excel::CSV
+            ),
+            'pdf' => \Excel::download(
+                new \App\Exports\SalesTrendsExport($salesData, $topProducts, $paymentMethods, $period, $days),
+                $fileName . '.pdf',
+                \Maatwebsite\Excel\Excel::DOMPDF
+            ),
+            default => back()->with('error', 'Invalid export type'),
+        };
     }
 
     public function exportSalesByCashierReport(Request $request)
@@ -1034,7 +1034,7 @@ class ReportController extends Controller
         $cashierId = $request->input('cashier_id');
 
         $cashierPerformance = $this->getCashierPerformance($startDate, $endDate, $cashierId);
-        
+
         // Get cashier name if specific cashier is selected
         $cashierName = null;
         if ($cashierId) {

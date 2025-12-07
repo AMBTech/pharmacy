@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\Pos\BatchAllocationController;
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\PointOfSaleController;
@@ -15,7 +17,7 @@ Route::get('/', function () {
 });
 
 // In routes/web.php - add a test route
-Route::get('/test', function () {
+//Route::get('/test', function () {
 //    return view('purchases.suppliers');
 //    $user = auth()->user();
 //
@@ -30,7 +32,7 @@ Route::get('/test', function () {
 //        'has_settings.view' => $user->hasPermission('settings.view'),
 //        'has_any_permission' => $user->hasPermission('*'),
 //    ]);
-});
+//});
 
 
 Route::middleware('auth')->group(function () {
@@ -45,56 +47,82 @@ Route::middleware('auth')->group(function () {
 });
 
 // POS Routes
-Route::prefix('pos')->middleware(['auth'])->group(function () {
+Route::prefix('pos')->middleware(['auth', 'can:pos.view'])->group(function () {
     Route::get('/', [PointOfSaleController::class, 'index'])->name('pos.index');
     Route::get('/search', [PointOfSaleController::class, 'searchProducts'])->name('pos.search');
     Route::post('/add-to-cart', [PointOfSaleController::class, 'addToCart'])->name('pos.add-to-cart');
-//    Route::post('/complete-sale', [PointOfSaleController::class, 'completeSale'])->name('pos.complete-sale');
 });
 
 // Categories Routes
 Route::prefix('categories')->middleware(['auth'])->group(function () {
-    Route::get('/', [CategoryController::class, 'index'])->name('categories.index');
-    Route::get('/create', [CategoryController::class, 'create'])->name('categories.create');
-    Route::post('/', [CategoryController::class, 'store'])->name('categories.store');
-    Route::get('/{category}', [CategoryController::class, 'show'])->name('categories.show');
-    Route::get('/{category}/edit', [CategoryController::class, 'edit'])->name('categories.edit');
-    Route::put('/{category}', [CategoryController::class, 'update'])->name('categories.update');
-    Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+    Route::middleware(['can:categories.create'])->group(function () {
+        Route::get('/create', [CategoryController::class, 'create'])->name('categories.create');
+        Route::post('/category/store', [CategoryController::class, 'store'])->name('categories.store');
+    });
 
-    // API routes for select dropdowns
-    Route::get('/api/list', [CategoryController::class, 'getCategoriesJson'])->name('categories.api.list');
+    Route::middleware(['can:categories.view'])->group(function () {
+        Route::get('/', [CategoryController::class, 'index'])->name('categories.index');
+        Route::get('/{category}', [CategoryController::class, 'show'])->name('categories.show');
+        Route::get('/api/list', [CategoryController::class, 'getCategoriesJson'])->name('categories.api.list');
+    });
+
+
+    Route::middleware(['can:categories.edit'])->group(function () {
+        Route::get('/{category}/edit', [CategoryController::class, 'edit'])->name('categories.edit');
+        Route::put('/{category}', [CategoryController::class, 'update'])->name('categories.update');
+    });
+
+    Route::middleware(['can:categories.delete'])->group(function () {
+        Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+    });
 });
 
 // Inventory Routes
 Route::prefix('inventory')->middleware(['auth'])->group(function () {
-    Route::get('/', [InventoryController::class, 'index'])->name('inventory.index');
-    Route::get('/create', [InventoryController::class, 'create'])->name('inventory.create');
-    Route::post('/', [InventoryController::class, 'store'])->name('inventory.store');
-    Route::get('/{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
-    Route::put('/{product}', [InventoryController::class, 'update'])->name('inventory.update');
-    Route::delete('/{product}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
-    Route::post('/{product}/batches', [InventoryController::class, 'addBatch'])->name('inventory.batches.store');
-    Route::delete('/batches/{batch}', [InventoryController::class, 'deleteBatch'])->name('inventory.batches.destroy');
-    Route::get('/{product}/batches', [InventoryController::class, 'batchManagement'])->name('inventory.batches.manage');
+    Route::middleware(['can:inventory.view'])->group(function () {
+        Route::get('/', [InventoryController::class, 'index'])->name('inventory.index');
+        Route::get('/{product}/batches', [InventoryController::class, 'batchManagement'])->name('inventory.batches.manage');
+        Route::get('/api/{product_id}/batches/list', [InventoryController::class, 'getBatchesJson'])->name('inventory.api.batches.list');
+    });
+
+    Route::middleware(['can:inventory.create'])->group(function () {
+        Route::get('/create', [InventoryController::class, 'create'])->name('inventory.create');
+        Route::post('/', [InventoryController::class, 'store'])->name('inventory.store');
+        Route::post('/{product}/batches', [InventoryController::class, 'addBatch'])->name('inventory.batches.store');
+    });
+
+    Route::middleware(['can:inventory.edit'])->group(function () {
+        Route::get('/{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
+        Route::put('/{product}', [InventoryController::class, 'update'])->name('inventory.update');
+    });
+
+    Route::middleware(['can:inventory.delete'])->group(function () {
+        Route::delete('/{product}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
+        Route::delete('/batches/{batch}', [InventoryController::class, 'deleteBatch'])->name('inventory.batches.destroy');
+    });
 });
 
 // Sales Routes
 Route::prefix('sales')->middleware(['auth'])->group(function () {
-    Route::get('/', [SalesController::class, 'index'])->name('sales.index');
-    Route::get('/{sale}', [SalesController::class, 'show'])->name('sales.show');
-    Route::post('/complete', [SalesController::class, 'completeSale'])->name('sales.complete');
-    Route::get('/{sale}/print', [SalesController::class, 'printInvoice'])->name('sales.print');
-    Route::delete('/{sale}', [SalesController::class, 'destroy'])->name('sales.destroy');
+    Route::middleware(['can:sales.view'])->group(function () {
+        Route::get('/', [SalesController::class, 'index'])->name('sales.index');
+        Route::get('/{sale}', [SalesController::class, 'show'])->name('sales.show');
+        Route::get('/{sale}/print', [SalesController::class, 'printInvoice'])->name('sales.print');
+        Route::get('/export/excel', [SalesController::class, 'exportExcel'])->name('sales.export.excel');
+        Route::get('/export/pdf', [SalesController::class, 'exportPDF'])->name('sales.export.pdf');
+    });
 
-    // Export routes
-    Route::get('/export/excel', [SalesController::class, 'exportExcel'])->name('sales.export.excel');
-    Route::get('/export/pdf', [SalesController::class, 'exportPDF'])->name('sales.export.pdf');
+    Route::middleware(['can:sales.create'])->group(function () {
+        Route::post('/complete', [SalesController::class, 'completeSale'])->name('sales.complete');
+    });
+
+    Route::middleware(['can:sales.delete'])->group(function () {
+        Route::delete('/{sale}', [SalesController::class, 'destroy'])->name('sales.destroy');
+    });
 });
 
 // POS Routes with hold functionality
-Route::prefix('pos')->middleware(['auth'])->group(function () {
-    Route::get('/', [PointOfSaleController::class, 'index'])->name('pos.index');
+Route::prefix('pos')->middleware(['auth', 'can:pos.view'])->group(function () {
     Route::post('/hold-sale', [PointOfSaleController::class, 'holdSale'])->name('pos.hold-sale');
     Route::post('/release-sale/{holdId}', [PointOfSaleController::class, 'releaseSale'])->name('pos.release-sale');
     Route::delete('/delete-held-sale/{holdId}', [PointOfSaleController::class, 'deleteHeldSale'])->name('pos.delete-held-sale');
@@ -102,7 +130,7 @@ Route::prefix('pos')->middleware(['auth'])->group(function () {
 });
 
 // Reports Routes
-Route::prefix('reports')->middleware(['auth'])->group(function () {
+Route::prefix('reports')->middleware(['auth', 'can:reports.view'])->group(function () {
     Route::get('/', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/sales-trends', [ReportController::class, 'salesTrends'])->name('reports.sales-trends');
     Route::get('/inventory', [ReportController::class, 'inventory'])->name('reports.inventory');
@@ -123,17 +151,34 @@ Route::prefix('reports')->middleware(['auth'])->group(function () {
 
 Route::middleware(['auth'])->prefix('settings')->group(function () {
     // Settings view access
-//    Route::middleware(['permission:settings.view'])->group(function () {
-    Route::middleware(['can:settings.view'])->group(function () {
+    /*Route::middleware(['can:settings.view'])->group(function () {
         Route::get('/', [SettingsController::class, 'index'])->name('settings.index');
-    });
+    });*/
 
     // System settings edit access
-    Route::middleware(['can:settings.edit'])->group(function () {
-        Route::get('/system', [SettingsController::class, 'system'])->name('settings.system');
-        Route::put('/system', [SettingsController::class, 'updateSystem'])->name('settings.system.update');
+//    Route::middleware(['can:settings.edit'])->group(function () {
+    Route::prefix('')->group(function () {
+        Route::get('/system', [SettingsController::class, 'system'])->name('settings.system')->middleware('can:settings.view');
+        Route::put('/system', [SettingsController::class, 'updateSystem'])->name('settings.system.update')->middleware('can:settings.edit');
+    });
+
+    // Roles and permissions management
+    Route::middleware(['can:roles.view'])->group(function () {
         Route::get('/roles', [SettingsController::class, 'roles'])->name('settings.roles');
+        Route::get('/roles/{role}/permissions', [SettingsController::class, 'getRolePermissions'])->name('settings.roles.permissions');
+    });
+
+    Route::middleware(['can:roles.create'])->group(function () {
+        Route::post('/roles', [SettingsController::class, 'storeRole'])->name('settings.roles.store');
+    });
+
+    Route::middleware(['can:roles.edit'])->group(function () {
+        Route::put('/roles/{role}', [SettingsController::class, 'updateRole'])->name('settings.roles.update');
         Route::put('/roles/{role}/permissions', [SettingsController::class, 'updateRolePermissions'])->name('settings.roles.permissions.update');
+    });
+
+    Route::middleware(['can:roles.delete'])->group(function () {
+        Route::delete('/roles/{role}', [SettingsController::class, 'destroyRole'])->name('settings.roles.destroy');
     });
 
     // User management access
@@ -143,36 +188,79 @@ Route::middleware(['auth'])->prefix('settings')->group(function () {
 
     Route::middleware(['can:users.create'])->group(function () {
         Route::post('/users', [SettingsController::class, 'storeUser'])->name('settings.users.store');
-        Route::delete('/users/destroy', [SettingsController::class, 'destroy'])->name('settings.users.destroy');
     });
 
     Route::middleware(['can:users.edit'])->group(function () {
         Route::put('/users/{user}', [SettingsController::class, 'updateUser'])->name('settings.users.update');
     });
+
+    Route::middleware(['can:users.delete'])->group(function () {
+        Route::delete('/users/{user}', [SettingsController::class, 'destroy'])->name('settings.users.destroy');
+    });
 });
 
-// Purchase Routes
-Route::middleware(['auth', \App\Http\Middleware\CheckPermission::class . ':purchases.view'])->prefix('purchases')->group(function () {
-    Route::get('/suppliers', [PurchaseController::class, 'suppliers'])->name('purchases.suppliers.index');
-    Route::get('/', [PurchaseController::class, 'index'])->name('purchases.index');
-    Route::get('/create', [PurchaseController::class, 'create'])->name('purchases.create');
-    Route::post('/', [PurchaseController::class, 'store'])->name('purchases.store');
-    Route::get('/{purchase}', [PurchaseController::class, 'show'])->name('purchases.show');
-    Route::get('/{purchase}/edit', [PurchaseController::class, 'edit'])->name('purchases.edit');
-    Route::put('/{purchase}', [PurchaseController::class, 'update'])->name('purchases.update');
-    Route::delete('/{purchase}', [PurchaseController::class, 'destroy'])->name('purchases.destroy');
+// Purchase/Suppliers Routes
+Route::prefix('purchases')->middleware(['auth'])->group(function () {
+    Route::middleware(['can:purchases.create'])->group(function () {
+        Route::get('/create', [PurchaseController::class, 'create'])->name('purchases.create');
+        Route::post('/', [PurchaseController::class, 'store'])->name('purchases.store');
+        Route::post('/{purchase}/order', [PurchaseController::class, 'markAsOrdered'])->name('purchases.mark-ordered');
+        Route::post('/{purchase}/receive', [PurchaseController::class, 'receiveStore'])->name('purchases.receive-store');
+    });
 
-    // Purchase Actions
-    Route::post('/{purchase}/order', [PurchaseController::class, 'markAsOrdered'])->name('purchases.mark-ordered');
-    Route::get('/{purchase}/receive', [PurchaseController::class, 'receive'])->name('purchases.receive');
-    Route::post('/{purchase}/receive', [PurchaseController::class, 'receiveStore'])->name('purchases.receive-store');
+    // Supplier Routes - specific routes before parameterized routes
+    Route::middleware(['can:suppliers.create'])->group(function () {
+        Route::get('/suppliers/create', [PurchaseController::class, 'createSupplier'])->name('purchases.suppliers.create');
+        Route::post('/suppliers', [PurchaseController::class, 'storeSupplier'])->name('purchases.suppliers.store');
+    });
 
-    // Supplier Routes
-    Route::get('/suppliers/create', [PurchaseController::class, 'createSupplier'])->name('purchases.suppliers.create');
-    Route::post('/suppliers', [PurchaseController::class, 'storeSupplier'])->name('purchases.suppliers.store');
-    Route::get('/suppliers/{supplier}', [PurchaseController::class, 'showSupplier'])->name('purchases.suppliers.show');
-    Route::get('/suppliers/{supplier}/edit', [PurchaseController::class, 'editSupplier'])->name('purchases.suppliers.edit');
-    Route::put('/suppliers/{supplier}', [PurchaseController::class, 'updateSupplier'])->name('purchases.suppliers.update');
+    Route::middleware(['can:suppliers.view'])->group(function () {
+        Route::get('/suppliers', [PurchaseController::class, 'suppliers'])->name('purchases.suppliers.index');
+        Route::get('/suppliers/{supplier}', [PurchaseController::class, 'showSupplier'])->name('purchases.suppliers.show');
+    });
+
+    Route::middleware(['can:purchases.view'])->group(function () {
+        Route::get('/', [PurchaseController::class, 'index'])->name('purchases.index');
+        Route::get('/{purchase}', [PurchaseController::class, 'show'])->name('purchases.show');
+        Route::get('/{purchase}/receive', [PurchaseController::class, 'receive'])->name('purchases.receive');
+    });
+
+
+    Route::middleware(['can:purchases.edit'])->group(function () {
+        Route::get('/{purchase}/edit', [PurchaseController::class, 'edit'])->name('purchases.edit');
+        Route::put('/{purchase}', [PurchaseController::class, 'update'])->name('purchases.update');
+    });
+
+    Route::middleware(['can:purchases.delete'])->group(function () {
+        Route::delete('/{purchase}', [PurchaseController::class, 'destroy'])->name('purchases.destroy');
+    });
+
+
+
+    Route::middleware(['can:suppliers.edit'])->group(function () {
+        Route::get('/suppliers/{supplier}/edit', [PurchaseController::class, 'editSupplier'])->name('purchases.suppliers.edit');
+        Route::put('/suppliers/{supplier}', [PurchaseController::class, 'updateSupplier'])->name('purchases.suppliers.update');
+    });
+
+    Route::middleware(['can:suppliers.delete'])->group(function () {
+        Route::delete('/suppliers/{supplier}', [PurchaseController::class, 'destroySupplier'])->name('purchases.suppliers.destroy');
+    });
+});
+
+// routes/web.php
+Route::middleware(['auth'])->group(function () {
+    Route::prefix('backups')->middleware(['can:settings.edit'])->group(function () {
+        Route::get('/', [BackupController::class, 'index'])->name('backups.index');
+        Route::post('/create', [BackupController::class, 'create'])->name('backups.create');
+        Route::get('/download/{filename}', [BackupController::class, 'download'])->name('backups.download');
+        Route::post('/restore', [BackupController::class, 'restore'])->name('backups.restore');
+        Route::delete('/delete/{filename}', [BackupController::class, 'delete'])->name('backups.delete');
+    });
+});
+
+// Mimic api routes
+Route::middleware(['auth'])->group(function () {
+    Route::post('/api/pos/allocate-batches', [BatchAllocationController::class, 'allocate'])->name('pos.allocate.batch');
 });
 
 require __DIR__ . '/auth.php';

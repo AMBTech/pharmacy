@@ -42,7 +42,7 @@
                                     @endif
                                 @endforeach
                                 <button type="submit" class="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                    <x-ui.icon name="pdf" class="w-3 h-3 mr-3"></x-ui.icon>
+                                    <x-ui.icon name="csv" class="w-3 h-3 mr-3"></x-ui.icon>
                                     Export as CSV
                                 </button>
                             </form>

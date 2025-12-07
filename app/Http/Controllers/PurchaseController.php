@@ -40,7 +40,6 @@ class PurchaseController extends Controller
 
     public function store(Request $request)
     {
-//        dd($request->all());
         $validated = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
             'order_date' => 'required|date',
@@ -399,7 +398,7 @@ class PurchaseController extends Controller
 
         Supplier::create($validated);
 
-        return redirect()->route('purchases.suppliers')
+        return redirect()->route('purchases.suppliers.index')
             ->with('success', 'Supplier created successfully.');
     }
 

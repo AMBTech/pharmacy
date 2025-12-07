@@ -96,13 +96,13 @@
                                     {{ $item->batch->batch_number ?? 'N/A' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    Rs. {{ number_format($item->unit_price, 2) }}
+                                    {{$currency_symbol}} {{ number_format($item->unit_price, 2) }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $item->quantity }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                                    Rs. {{ number_format($item->total_price, 2) }}
+                                    {{$currency_symbol}} {{ number_format($item->total_price, 2) }}
                                 </td>
                             </tr>
                         @endforeach
@@ -116,21 +116,21 @@
                 <div class="max-w-md ml-auto space-y-3">
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-600">Subtotal</span>
-                        <span class="text-gray-900">Rs. {{ number_format($sale->subtotal, 2) }}</span>
+                        <span class="text-gray-900">{{$currency_symbol}} {{ number_format($sale->subtotal, 2) }}</span>
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-600">Tax (8%)</span>
-                        <span class="text-gray-900">Rs. {{ number_format($sale->tax_amount, 2) }}</span>
+                        <span class="text-gray-900">{{$currency_symbol}} {{ number_format($sale->tax_amount, 2) }}</span>
                     </div>
                     @if($sale->discount_amount > 0)
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Discount</span>
-                            <span class="text-red-600">- Rs. {{ number_format($sale->discount_amount, 2) }}</span>
+                            <span class="text-red-600">- {{$currency_symbol}} {{ number_format($sale->discount_amount, 2) }}</span>
                         </div>
                     @endif
                     <div class="flex justify-between text-lg font-bold border-t pt-3">
                         <span>Total Amount</span>
-                        <span>Rs. {{ number_format($sale->total_amount, 2) }}</span>
+                        <span>{{$currency_symbol}} {{ number_format($sale->total_amount, 2) }}</span>
                     </div>
                 </div>
             </div>

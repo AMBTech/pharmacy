@@ -13,9 +13,18 @@ class SystemSetting extends Model
         'tax_rate',
         'currency',
         'low_stock_threshold',
+//        'company_name',
+//        'company_address',
+//        'company_phone',
+//        'license_number',
+//        'company_email'
+    ];
+
+    protected $guarded = [
         'company_name',
         'company_address',
         'company_phone',
+        'license_number',
         'company_email'
     ];
 

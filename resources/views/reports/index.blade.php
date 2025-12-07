@@ -27,7 +27,7 @@
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Today's Sales</p>
-                        <p class="text-2xl font-bold text-gray-900">Rs. {{ number_format($todaySales, 2) }}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ $currency_symbol }} {{ number_format($todaySales, 2) }}</p>
                     </div>
                 </div>
             </x-ui.card>
@@ -40,7 +40,7 @@
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Monthly Sales</p>
-                        <p class="text-2xl font-bold text-gray-900">Rs. {{ number_format($monthSales, 2) }}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ $currency_symbol }} {{ number_format($monthSales, 2) }}</p>
                     </div>
                 </div>
             </x-ui.card>
@@ -203,7 +203,7 @@
                             </div>
                         </div>
                         <div class="text-right">
-                            <p class="font-bold text-gray-900">Rs. {{ number_format($sale->total_amount, 2) }}</p>
+                            <p class="font-bold text-gray-900">{{ $currency_symbol }} {{ number_format($sale->total_amount, 2) }}</p>
                             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
                         {{ $sale->payment_method == 'cash' ? 'bg-green-100 text-green-800' :
                            ($sale->payment_method == 'card' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800') }}">
