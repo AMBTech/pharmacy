@@ -18,6 +18,7 @@ class SaleItem extends Model
         'unit_price',
         'quantity',
         'total_price',
+        'refunded_quantity'
     ];
 
     protected $casts = [
@@ -38,5 +39,10 @@ class SaleItem extends Model
     public function batch(): BelongsTo
     {
         return $this->belongsTo(ProductBatch::class, 'product_batch_id');
+    }
+
+    public function availableForRefund()
+    {
+        return $this->quantity - $this->refunded_quantity;
     }
 }

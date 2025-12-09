@@ -60,4 +60,41 @@ class Sale extends Model
 
         return "INV-{$date}-" . str_pad($sequence, 4, '0', STR_PAD_LEFT);
     }
+
+    public function returns()
+    {
+        return $this->hasMany(\App\Models\ReturnOrder::class, 'sale_id');
+    }
+
+    public function getRefundedAmountAttribute()
+    {
+        // sum of approved return amounts for this sale
+        return $this->returns()->where('status','approved')->sum('refund_amount');
+    }
+
+    public function getPendingRefundedAmountAttribute()
+    {
+        // sum of approved return amounts for this sale
+        return $this->returns()->where('status','pending')->sum('refund_amount');
+    }
+
+    public function getNetAmountAttribute()
+    {
+        return round($this->total_amount - $this->refunded_amount, 2);
+    }
+
+    public function getRefundStatusAttribute()
+    {
+        // compute based on refunded qty vs sold qty
+        $totalSold = $this->items->sum('quantity');
+        $totalRefunded = $this->items->sum('refunded_quantity');
+        if ($totalRefunded == 0) return 'none';
+        if ($totalRefunded < $totalSold) return 'partial';
+        return 'full';
+    }
+
+    public function isFullyRefunded(): bool
+    {
+        return $this->refund_status === 'full';
+    }
 }

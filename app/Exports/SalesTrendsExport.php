@@ -102,7 +102,7 @@ class SalesTrendsExport implements FromCollection, WithHeadings, WithMapping, Wi
 
         // ---------- Subheader: Address ----------
         $sheet->mergeCells('A2:D2');
-//        $sheet->setCellValue('A2', 'Mehmoodabad Kamila road Near Tariq Nursery Jhelum');
+
         $sheet->setCellValue('A2', $this->settings['company_address']);
         $sheet->getStyle('A2')->applyFromArray([
             'font' => [

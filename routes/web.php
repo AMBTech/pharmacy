@@ -8,6 +8,7 @@ use App\Http\Controllers\PointOfSaleController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ReturnOrderController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
@@ -257,6 +258,21 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/delete/{filename}', [BackupController::class, 'delete'])->name('backups.delete');
     });
 });
+
+Route::middleware(['auth'])->group(function () {
+    // Search invoice page
+    Route::get('/returns/search', [ReturnOrderController::class, 'search'])->name('returns.search')->middleware('can:returns.view');
+    Route::get('/returns/results', [ReturnOrderController::class, 'search_result'])->name('returns.results');
+
+    Route::get('/returns', [ReturnOrderController::class, 'index'])->name('returns.index')->middleware('can:returns.view');
+    Route::get('/returns/create/{sale}', [ReturnOrderController::class, 'create'])->name('returns.create')->middleware('can:returns.create');
+    Route::post('/returns/{sale}', [ReturnOrderController::class, 'store'])->name('returns.store')->middleware('can:returns.store');
+    Route::get('/returns/{returnOrder}', [ReturnOrderController::class, 'show'])->name('returns.show');
+    Route::post('/returns/{return}/approve', [ReturnOrderController::class, 'approve'])->name('returns.approve')->middleware('can:returns.approve');
+    Route::post('/returns/{return}/reject', [ReturnOrderController::class, 'reject'])->name('returns.reject')->middleware('can:returns.approve');
+    Route::post('/returns/{return}/cancel', [ReturnOrderController::class, 'cancel'])->name('returns.reject')->middleware('can:returns.cancel');
+});
+
 
 // Mimic api routes
 Route::middleware(['auth'])->group(function () {

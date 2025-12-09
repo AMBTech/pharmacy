@@ -17,6 +17,18 @@ return [
                 'edit' => 'Edit POS system',
             ],
         ],
+        'returns' => [
+            'label' => 'Returns',
+            'description' => 'Process returns transactions',
+            'permissions' => [
+                'create' => 'Create',
+                'view' => 'View',
+                'store' => 'Store',
+                'edit' => 'Edit',
+                'approve' => 'Approve',
+                'reject' => 'Reject',
+            ],
+        ],
         'purchases' => [
             'label' => 'Purchases',
             'description' => 'Manage purchase orders',

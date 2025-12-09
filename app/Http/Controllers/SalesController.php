@@ -16,6 +16,84 @@ class SalesController extends Controller
 {
     public function index(Request $request)
     {
+        $query = Sale::with(['items.product', 'cashier'])->latest();
+
+        // Date range filter
+        if ($request->has('start_date') && $request->start_date) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+
+        if ($request->has('end_date') && $request->end_date) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+
+        // Payment method filter
+        if ($request->has('payment_method') && $request->payment_method) {
+            $query->where('payment_method', $request->payment_method);
+        }
+
+        // Search by invoice number or customer
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('invoice_number', 'like', "%{$search}%")
+                    ->orWhere('customer_name', 'like', "%{$search}%")
+                    ->orWhere('customer_phone', 'like', "%{$search}%");
+            });
+        }
+
+        // paginate (keeps existing behavior)
+        $sales = $query->paginate(20);
+
+        // Collect sale_item ids for all items present in the paginated page
+        $saleItemIds = $sales->flatMap(function ($sale) {
+            return $sale->items->pluck('id');
+        })->unique()->values()->all();
+
+        // 1) Pending return quantities grouped by sale_item_id (only 'pending' returns)
+        $pendingBySaleItem = \App\Models\ReturnOrderItem::query()
+            ->selectRaw('sale_item_id, SUM(quantity) as pending_qty')
+            ->whereIn('sale_item_id', $saleItemIds)
+            ->whereHas('returnOrder', function ($q) {
+                $q->where('status', 'pending');
+            })
+            ->groupBy('sale_item_id')
+            ->get()
+            ->pluck('pending_qty', 'sale_item_id'); // [sale_item_id => pending_qty]
+
+        // 2) Approved refund amounts per sale (so view can show refunded_amount)
+        $saleIds = $sales->pluck('id')->unique()->values()->all();
+        $approvedRefundsBySale = \App\Models\ReturnOrder::query()
+            ->selectRaw('sale_id, SUM(refund_amount) as refunded')
+            ->whereIn('sale_id', $saleIds)
+            ->where('status', 'approved')
+            ->groupBy('sale_id')
+            ->get()
+            ->pluck('refunded', 'sale_id'); // [sale_id => refunded_amount]
+
+        // Attach pending_return_qty to each sale item and refunded_amount to sale
+        foreach ($sales as $sale) {
+            $sale->refunded_amount = isset($approvedRefundsBySale[$sale->id]) ? (float) $approvedRefundsBySale[$sale->id] : 0.0;
+
+            foreach ($sale->items as $item) {
+                $item->pending_return_qty = (int) ($pendingBySaleItem[$item->id] ?? 0);
+                // keep existing refunded_quantity if present on model; ensure integer
+                $item->refunded_quantity = (int) ($item->refunded_quantity ?? 0);
+            }
+        }
+
+        // Sales statistics (keep original behaviour)
+        $todaySales = Sale::whereDate('created_at', today())->sum('total_amount');
+        $monthSales = Sale::whereMonth('created_at', now()->month)->sum('total_amount');
+        $totalSales = Sale::count();
+
+        $currency_symbol = get_currency_symbol();
+
+        return view('sales.index', compact('sales', 'todaySales', 'monthSales', 'totalSales', 'currency_symbol'));
+    }
+
+    public function index1(Request $request)
+    {
         $query = Sale::with(['items', 'cashier'])->latest();
 
         // Date range filter
@@ -60,92 +138,6 @@ class SalesController extends Controller
         $sale->load(['items.product', 'items.batch', 'cashier']);
         return view('sales.show', compact('sale', 'currency_symbol'));
     }
-
-    /*public function completeSale(Request $request)
-    {
-        $request->validate([
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'customer_name' => 'nullable|string|max:255',
-            'customer_phone' => 'nullable|string|max:20',
-            'payment_method' => 'required|in:cash,card,digital',
-            'notes' => 'nullable|string',
-        ]);
-
-        return DB::transaction(function () use ($request) {
-            $subtotal = 0;
-            $items = [];
-
-            // Calculate totals and prepare items
-            foreach ($request->items as $itemData) {
-                $product = Product::findOrFail($itemData['product_id']);
-                $batch = $this->getAvailableBatch($product, $itemData['quantity']);
-
-                if (!$batch) {
-                    throw new \Exception("Insufficient stock for {$product->name}");
-                }
-
-                $unitPrice = $product->price;
-                $quantity = $itemData['quantity'];
-                $totalPrice = $unitPrice * $quantity;
-
-                $subtotal += $totalPrice;
-
-                $items[] = [
-                    'product_id' => $product->id,
-                    'product_batch_id' => $batch->id,
-                    'product_name' => $product->name,
-                    'unit_price' => $unitPrice,
-                    'quantity' => $quantity,
-                    'total_price' => $totalPrice,
-                ];
-
-                // Update batch quantity
-                $batch->decrement('quantity', $quantity);
-            }
-
-            // Calculate tax and total
-            $taxAmount = $subtotal * 0.08; // 8% tax
-            $discountType = $request->discountType;
-            $discountAmount = $request->discount ?? 0;
-            $discount_value = $discountType === "percentage" ? ($subtotal * ($discountAmount / 100)) : $discountAmount;
-            $totalAmount = $subtotal + $taxAmount - $discount_value;
-
-            // Create sale
-            $sale = Sale::create([
-                'cashier_id' => auth()->id(),
-                'customer_name' => $request->customer_name,
-                'customer_phone' => $request->customer_phone,
-                'subtotal' => $subtotal,
-                'tax_amount' => $taxAmount,
-                'discount_amount' => $discount_value,
-                'total_amount' => $totalAmount,
-                'payment_method' => $request->payment_method,
-                'notes' => $request->notes,
-            ]);
-
-            // Create sale items
-            $sale->items()->createMany($items);
-
-            // Update product stocks
-            foreach ($items as $item) {
-                $product = Product::find($item['product_id']);
-                if ($product) {
-                    $product->update([
-                        'stock' => $product->batches()->sum('quantity')
-                    ]);
-                }
-            }
-
-            return response()->json([
-                'success' => true,
-                'sale_id' => $sale->id,
-                'invoice_number' => $sale->invoice_number,
-                'message' => 'Sale completed successfully!'
-            ]);
-        });
-    }*/
 
     public function completeSale(Request $request)
     {
@@ -286,6 +278,8 @@ class SalesController extends Controller
                 }
             }
 
+            event('transaction.sale.created', [$sale, $request->payment_method]);
+
             return response()->json([
                 'success' => true,
                 'sale_id' => $sale->id,
@@ -362,8 +356,10 @@ class SalesController extends Controller
     {
         $filters = $request->only(['start_date', 'end_date', 'payment_method', 'search']);
         $filename = 'sales-report-' . now()->format('Y-m-d-H-i-s') . '.xlsx';
+        $report_period = $request->start_date && $request->end_date ?
+            "From " . $request->start_date . " to " . $request->end_date : "All Time";
 
-        return Excel::download(new SalesExport($filters), $filename);
+        return Excel::download(new SalesExport($filters, $report_period), $filename);
     }
 
     public function exportPDF(Request $request)

@@ -761,7 +761,7 @@ class ReportController extends Controller
         $filters = json_decode($request->input('filters', '{}'), true);
 
         // Build query with filters (same as inventory method)
-        $query = Product::with(['category', 'batches']);
+        $query = Product::with(['category', 'batches', 'sale']);
 
         // Apply filters (reuse filter logic)
         if (!empty($filters['name'])) {

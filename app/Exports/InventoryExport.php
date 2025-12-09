@@ -290,6 +290,7 @@ class InventoryExport implements FromCollection, WithHeadings, WithMapping, With
 
         $summaryRow++;
         $totalTransactions = $this->products->sum('transactions');
+        dd($totalTransactions, $this->products);
         $totalRevenue = $this->products->sum('revenue');
         $avgSale = $totalTransactions > 0 ? $totalRevenue / $totalTransactions : 0;
 

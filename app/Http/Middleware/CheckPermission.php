@@ -37,7 +37,7 @@ class CheckPermission
             // You can change the route to a more generic location if needed.
             return redirect()
                 ->back()
-                ->with('error', 'You do not have permission to perform that action.');
+                ->with('error', 'You do not have permission to perform this action.');
         }
 
         return $next($request);

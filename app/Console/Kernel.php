@@ -44,8 +44,8 @@ class Kernel extends ConsoleKernel
 
         // 7. Monthly backup to cloud (if configured)
         $schedule->command('backup:run --only-db --disable-notifications')
-            ->monthlyOn(1, '02:00') // 1st of month at 2 AM
-            ->emailOutputOnFailure('admin@yourdomain.com');
+            ->monthlyOn(1, '02:00'); // 1st of month at 2 AM
+//            ->emailOutputOnFailure('admin@yourdomain.com');
 
         // ========== APPLICATION MAINTENANCE ==========
 

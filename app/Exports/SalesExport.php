@@ -3,99 +3,392 @@
 namespace App\Exports;
 
 use App\Models\Sale;
+use App\Models\SystemSetting;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use Carbon\Carbon;
 
-class SalesExport implements FromCollection, WithHeadings, WithMapping, WithStyles
+class SalesExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithTitle, WithEvents
 {
     protected $filters;
+    protected $salesData;
+    protected $summaryData;
+    protected $dataCount = 0;
+    protected $currency_symbol;
+    protected $settings;
+    protected $report_period;
 
-    public function __construct($filters = [])
+    public function __construct($filters = [], $report_period = 'All Time')
     {
         $this->filters = $filters;
+        $this->processSalesData();
+        $this->currency_symbol = get_currency_symbol();
+        $this->settings = SystemSetting::getSettings();
+        $this->report_period = $report_period;
     }
 
-    public function collection()
+    protected function processSalesData()
     {
-        $query = Sale::with(['items', 'cashier']);
+        $query = Sale::query()->with('cashier');
 
-        // Apply the same filters as the index page
+        // Apply date filters for last 30 days if not specified
         if (isset($this->filters['start_date']) && $this->filters['start_date']) {
-            $query->whereDate('created_at', '>=', $this->filters['start_date']);
+            $startDate = Carbon::parse($this->filters['start_date']);
+        } else {
+            $startDate = Carbon::now()->subDays(30);
         }
 
         if (isset($this->filters['end_date']) && $this->filters['end_date']) {
-            $query->whereDate('created_at', '<=', $this->filters['end_date']);
+            $endDate = Carbon::parse($this->filters['end_date'])->endOfDay();
+        } else {
+            $endDate = Carbon::now();
         }
 
+        $query->whereBetween('created_at', [$startDate, $endDate]);
+
+        // Apply other filters
         if (isset($this->filters['payment_method']) && $this->filters['payment_method']) {
             $query->where('payment_method', $this->filters['payment_method']);
         }
 
-        if (isset($this->filters['search']) && $this->filters['search']) {
-            $search = $this->filters['search'];
-            $query->where(function ($q) use ($search) {
-                $q->where('invoice_number', 'like', "%{$search}%")
-                    ->orWhere('customer_name', 'like', "%{$search}%")
-                    ->orWhere('customer_phone', 'like', "%{$search}%");
-            });
+        $this->sales = $query->orderBy('created_at')->get();
+
+        // Process each sale individually
+        $processedSales = [];
+        $totalTransactions = 0;
+        $totalRevenue = 0;
+        $transactionsByDate = [];
+
+        foreach ($this->sales as $sale) {
+            $date = $sale->created_at->format('M d, Y');
+
+            // Count transactions per date for summary
+            if (!isset($transactionsByDate[$date])) {
+                $transactionsByDate[$date] = 0;
+            }
+            $transactionsByDate[$date]++;
+
+            $processedSales[] = [
+                'date' => $date,
+                'invoice_number' => $sale->invoice_number,
+                'transactions' => 1, // Each sale is 1 transaction
+                'revenue' => $sale->total_amount,
+                'average_sale' => $sale->total_amount, // For single transaction, average = revenue
+                'cashier' => $sale->cashier->name ?? 'System',
+                'payment_method' => $sale->payment_method,
+                'sale' => $sale // Keep the original sale object if needed
+            ];
+
+            $totalTransactions++;
+            $totalRevenue += $sale->total_amount;
         }
 
-        return $query->latest()->get();
+        $this->salesData = $processedSales;
+        $this->dataCount = count($this->salesData);
+
+        $this->summaryData = [
+            'total_transactions' => $totalTransactions,
+            'total_revenue' => $totalRevenue,
+            'average_sale' => $totalTransactions > 0 ? $totalRevenue / $totalTransactions : 0,
+            'start_date' => $startDate->format('M d, Y'),
+            'end_date' => $endDate->format('M d, Y'),
+            'date_generated' => Carbon::now()->format('M d, Y H:i'),
+            'transactions_by_date' => $transactionsByDate // Keep this if you need it for other calculations
+        ];
+    }
+
+    public function collection()
+    {
+        return collect($this->salesData);
+    }
+
+    public function title(): string
+    {
+        return 'Sales Trends Report';
     }
 
     public function headings(): array
     {
         return [
-            'Invoice Number',
-            'Date & Time',
-            'Customer Name',
-            'Customer Phone',
-            'Items Count',
-            'Subtotal (Rs.)',
-            'Tax (Rs.)',
-            'Discount (Rs.)',
-            'Total Amount (Rs.)',
-            'Payment Method',
-            'Cashier',
-            'Notes'
+            [$this->settings['company_name']],
+            [$this->settings['company_address']],
+            [''], // Empty line for spacing
+            ['Sales History Report'],
+            [''], // Empty line for spacing
+            ['Report Period:', $this->report_period],
+            ['Date Generated:', $this->summaryData['date_generated']],
+            ['Generated by:', auth()->user()->name ?? 'System'],
+            [''], // Empty line for spacing
+            ['Date', 'Invoice #', 'Transactions', "Revenue ({$this->currency_symbol})", "Average Sale ({$this->currency_symbol})", 'Cashier', 'Payment Method']
         ];
     }
 
-    public function map($sale): array
+    public function map($data): array
     {
+        $averageSale = $data['transactions'] > 0 ? $data['revenue'] / $data['transactions'] : 0;
+
         return [
-            $sale->invoice_number,
-            $sale->created_at->format('Y-m-d H:i:s'),
-            $sale->customer_name ?: 'Walk-in Customer',
-            $sale->customer_phone ?: 'N/A',
-            $sale->items->count(),
-            number_format($sale->subtotal, 2),
-            number_format($sale->tax_amount, 2),
-            number_format($sale->discount_amount, 2),
-            number_format($sale->total_amount, 2),
-            ucfirst($sale->payment_method),
-            $sale->cashier->name ?? 'System',
-            $sale->notes ?: 'N/A'
+            $data['date'],
+            $data['invoice_number'],
+            $data['transactions'],
+            (float)$data['revenue'],
+            (float)$averageSale,
+            $data['cashier'],
+            ucfirst($data['payment_method']),
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
-        return [
-            // Style the first row as bold text
-            1 => ['font' => ['bold' => true]],
+        $lastDataRow = $this->dataCount + 10; // 10 rows before data starts
 
-            // Style the header row
-            'A1:L1' => [
+        $styles = [
+            // Clinic name - bold and centered
+            1 => [
+                'font' => ['bold' => true, 'size' => 16],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+            ],
+
+            // Address
+            2 => [
+                'font' => ['size' => 11],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+            ],
+
+            // Row 3 - for image (set vertical alignment)
+            'A3:G3' => [
+                'alignment' => [
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                ]
+            ],
+
+            // Report title
+            4 => [
+                'font' => ['bold' => true, 'size' => 14],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+            ],
+
+            // Report period headers
+            'A6:A8' => [
+                'font' => ['bold' => true]
+            ],
+
+            // Data headers
+            10 => [
+                'font' => ['bold' => true],
                 'fill' => [
-                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'fillType' => Fill::FILL_SOLID,
                     'color' => ['argb' => 'FFE6E6FA']
                 ]
             ],
+
+            // Summary section
+            ($lastDataRow + 2) => [
+                'font' => ['bold' => true, 'size' => 12]
+            ],
+
+            // Summary data
+            'A' . ($lastDataRow + 3) . ':A' . ($lastDataRow + 5) => [
+                'font' => ['bold' => true]
+            ],
+
+            // Left align numeric columns
+            'B11:B' . $lastDataRow => [
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT]
+            ],
+
+            // Right align numeric columns
+            'E11:E' . $lastDataRow => [
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT]
+            ],
+
+            'C11:D' . $lastDataRow => [
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT]
+            ],
+
+            // Format summary numbers
+            'C' . ($lastDataRow + 3) . ':C' . ($lastDataRow + 5) => [
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT],
+                'font' => ['bold' => true]
+            ],
+
+            // Set borders for data table
+            'A10:G' . $lastDataRow => [
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['argb' => 'FF000000'],
+                    ],
+                ],
+            ],
+        ];
+
+        return $styles;
+    }
+
+    public function pageLayoutSettings($sheet, $dataEndRow)
+    {
+        // --------- A4 print settings (fit to page) ----------
+        // Set A4 paper, landscape orientation, fit-to-width
+        $pageSetup = $sheet->getPageSetup();
+        $pageSetup->setPaperSize(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4);
+        $pageSetup->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+
+        // Fit to width (1 page wide), allow multiple pages vertically if needed
+        $pageSetup->setFitToWidth(1);
+        $pageSetup->setFitToHeight(0);
+        $pageSetup->setFitToPage(true);
+
+        // Set print area so Excel knows what to scale
+        $sheet->getParent()->getActiveSheet()->getPageSetup();
+        $sheet->getPageSetup()->setPrintArea("A1:E{$dataEndRow}");
+
+        // Set margins (in inches)
+        $margins = $sheet->getPageMargins();
+        $margins->setTop(0.4);
+        $margins->setRight(0.25);
+        $margins->setLeft(0.25);
+        $margins->setBottom(0.4);
+    }
+
+    private function placeImage($sheet)
+    {
+        $imagePath = public_path('images/clinic-logo.png');
+        if (file_exists($imagePath)) {
+            $colWidthToPx = function ($width) {
+                if (!$width || $width <= 0) $width = 8.43;
+                return (int)round($width * 7 + 5);
+            };
+
+            // Calculate total width of merged cells A3:G3
+            $totalWidthPx = 0;
+            $columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+
+            foreach ($columns as $col) {
+                $colWidth = $sheet->getColumnDimension($col)->getWidth();
+                if (!$colWidth || $colWidth <= 0) $colWidth = 8.43;
+                $totalWidthPx += $colWidthToPx($colWidth);
+            }
+
+            $rowHeightPoints = $sheet->getRowDimension(3)->getRowHeight();
+            if (!$rowHeightPoints) $rowHeightPoints = 66;
+            $rowHeightPx = $rowHeightPoints * 1.333333;
+
+            [$origW, $origH] = getimagesize($imagePath);
+
+            $marginPx = 8;
+
+            $maxWidth = max(1, $totalWidthPx - ($marginPx * 2));
+            $maxHeight = max(1, $rowHeightPx - ($marginPx * 2));
+
+            $scaleW = $maxWidth / $origW;
+            $scaleH = $maxHeight / $origH;
+            $scale = min($scaleW, $scaleH, 1);
+
+            $renderedWidthPx = (int)round($origW * $scale);
+            $renderedHeightPx = (int)round($origH * $scale);
+
+            $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+            $drawing->setName('Clinic Logo');
+            $drawing->setDescription('Clinic Logo');
+            $drawing->setPath($imagePath);
+            $drawing->setWidth($renderedWidthPx);
+            $drawing->setCoordinates('C3'); // Start from A3 since cells are merged
+
+            $offsetX = (int)round(($totalWidthPx - $renderedWidthPx) / 2);
+            $offsetY = (int)round(($rowHeightPx - $renderedHeightPx) / 2);
+
+            $drawing->setOffsetX(max(0, $offsetX));
+            $drawing->setOffsetY(max(0, $offsetY));
+
+            $drawing->setWorksheet($sheet);
+
+            // Style the merged cell A3:G3 for centering
+            $sheet->getStyle('A3')->getAlignment()
+                ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+                ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+
+        }
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function(AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+
+                // Merge cells for clinic name and address
+                $sheet->mergeCells('A1:G1');
+                $sheet->mergeCells('A2:G2');
+
+                // Merge row 3 for image placement
+                $sheet->mergeCells('A3:G3');
+
+                // Set row height for row 3 for image placement
+                $sheet->getRowDimension(3)->setRowHeight(66);
+
+                $sheet->mergeCells('A4:G4');
+
+                // Merge report info cells
+                $sheet->mergeCells('B6:G6');
+                $sheet->mergeCells('B7:G7');
+                $sheet->mergeCells('B8:G8');
+
+                // Calculate the last data row
+                $lastDataRow = $this->dataCount + 10; // 10 rows before data starts
+
+                // Add summary section
+                $sheet->setCellValue('A' . ($lastDataRow + 2), 'SUMMARY');
+                $sheet->mergeCells('A' . ($lastDataRow + 2) . ':D' . ($lastDataRow + 2));
+
+                $sheet->setCellValue('A' . ($lastDataRow + 3), 'Total Transactions:');
+                $sheet->setCellValue('C' . ($lastDataRow + 3), number_format($this->summaryData['total_transactions']));
+
+                $sheet->setCellValue('A' . ($lastDataRow + 4), 'Total Revenue:');
+                $sheet->setCellValue('C' . ($lastDataRow + 4), $this->currency_symbol . number_format($this->summaryData['total_revenue'], 2));
+
+                $sheet->setCellValue('A' . ($lastDataRow + 5), 'Overall Average Sale:');
+                $sheet->setCellValue('C' . ($lastDataRow + 5), $this->currency_symbol . number_format($this->summaryData['average_sale'], 2));
+
+                // Style summary section
+                $sheet->getStyle('A' . ($lastDataRow + 2))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+
+                $summaryBorderStyle = [
+                    'borders' => [
+                        'top' => [
+                            'borderStyle' => Border::BORDER_MEDIUM,
+                            'color' => ['argb' => 'FF000000'],
+                        ],
+                    ],
+                ];
+
+                $sheet->getStyle('A' . ($lastDataRow + 2) . ':G' . ($lastDataRow + 5))->applyFromArray($summaryBorderStyle);
+
+                // Adjust column widths
+                $sheet->getColumnDimension('A')->setWidth(15);
+                $sheet->getColumnDimension('B')->setWidth(20);
+                $sheet->getColumnDimension('C')->setWidth(15);
+                $sheet->getColumnDimension('D')->setWidth(20);
+                $sheet->getColumnDimension('D')->setWidth(20);
+                $sheet->getColumnDimension('E')->setWidth(18);
+                $sheet->getColumnDimension('F')->setWidth(15);
+                $sheet->getColumnDimension('G')->setWidth(20);
+
+                $this->pageLayoutSettings($sheet, $lastDataRow);
+
+                // Place image AFTER all cells are merged and dimensions are set
+                $this->placeImage($sheet);
+            },
         ];
     }
 }

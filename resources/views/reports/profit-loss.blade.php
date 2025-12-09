@@ -96,7 +96,7 @@
             <x-ui.card class="text-center">
                 <div class="flex items-center justify-center mb-2">
                     <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                        <i class="lni lni-emoji-smile text-2xl text-green-600"></i>
+                        <i class="lni lni-smile text-2xl text-green-600"></i>
                     </div>
                 </div>
                 <p class="text-2xl font-bold text-green-600">{{ format_currency($profitLossData['gross_profit']) }}</p>

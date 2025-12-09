@@ -22,6 +22,13 @@
             'permission' => 'pos.view',
         ],
         [
+            'name' => 'Returns',
+            'route' => 'returns.index',
+            'icon' => 'nav/cart',
+            'type' => 'single',
+            'permission' => 'returns.view',
+        ],
+        [
             'name' => 'Purchases',
             'icon' => 'nav/stock',
             'type' => 'group',
