@@ -24,13 +24,13 @@
         [
             'name' => 'Returns',
             'route' => 'returns.index',
-            'icon' => 'nav/cart',
+            'icon' => 'nav/reload',
             'type' => 'single',
             'permission' => 'returns.view',
         ],
         [
             'name' => 'Purchases',
-            'icon' => 'nav/stock',
+            'icon' => 'nav/expense',
             'type' => 'group',
             'expanded' => request()->routeIs('purchases.*'),
             'children' => [
@@ -48,7 +48,7 @@
         ],
         [
             'name' => 'Suppliers',
-            'icon' => 'users',
+            'icon' => 'nav/users',
             'type' => 'group',
             'expanded' => request()->routeIs('purchases.suppliers.*'),
             'children' => [
@@ -88,6 +88,26 @@
             'icon' => 'nav/sale',
             'type' => 'single',
             'permission' => 'sales.view',
+        ],
+        [
+            'name' => 'Transactions',
+            'icon' => 'nav/trx',
+            'type' => 'single',
+            'route' => 'transactions.index',
+            'permissions' => 'permissions.view',
+            /*'expanded' => request()->routeIs('transactions.*') || request()->routeIs('transactions.*'),
+            'children' => [
+                [
+                    'name' => 'All Transactions',
+                    'route' => 'transactions.index',
+                    'permissions' => 'transactions.view'
+                ],
+                [
+                    'name' => 'Statistics',
+                    'route' => 'transactions.statistics',
+                    'permissions' => 'transactions.view'
+                ],
+            ],*/
         ],
         [
             'name' => 'Reports',

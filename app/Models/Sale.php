@@ -30,6 +30,15 @@ class Sale extends Model
         'total_amount' => 'decimal:2',
     ];
 
+    public function scopeAuth($query)
+    {
+        $user = auth()->user();
+        if ($user && !$user->hasPermission('view_all_sales')) {
+            return $query->where('cashier_id', $user->id);
+        }
+        return $query;
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(SaleItem::class);

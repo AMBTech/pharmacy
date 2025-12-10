@@ -34,6 +34,15 @@ class Transaction extends Model
         'updated_at' => 'datetime',
     ];
 
+    public function scopeAuth($query)
+    {
+        $user = auth()->user();
+        if ($user && !$user->hasPermission('view_all_transactions')) {
+            return $query->where('user_id', $user->id);
+        }
+        return $query;
+    }
+
     /**
      * Get the user who created the transaction.
      */
@@ -144,6 +153,7 @@ class Transaction extends Model
         $labels = [
             'sale' => 'Sale',
             'refund' => 'Refund',
+            'return_rejection' => 'Return Rejection',
             'expense' => 'Expense',
             'payment' => 'Payment',
         ];
@@ -172,6 +182,7 @@ class Transaction extends Model
      */
     public function getSignedAmountAttribute(): string
     {
+        $currency_symbol = get_currency_symbol();
         $sign = '';
         $amount = number_format(abs($this->amount), 2);
 
@@ -181,7 +192,7 @@ class Transaction extends Model
             $sign = '-';
         }
 
-        return $sign . '₹' . $amount;
+        return $sign . $currency_symbol . $amount;
     }
 
     /**
@@ -206,6 +217,7 @@ class Transaction extends Model
         $badges = [
             'sale' => 'bg-green-100 text-green-800',
             'refund' => 'bg-red-100 text-red-800',
+            'return_rejection' => 'bg-gray-100 text-gray-800',
             'expense' => 'bg-orange-100 text-orange-800',
             'payment' => 'bg-blue-100 text-blue-800',
         ];
@@ -468,10 +480,9 @@ class Transaction extends Model
      */
     public function sale()
     {
-        if ($this->transaction_type === 'sale' && $this->related_type === 'sale') {
-            return $this->related;
-        }
-        return null;
+        return $this->belongsTo(Sale::class, 'related_id')
+            ->where('related_type', Sale::class)
+            ->where('transaction_type', Sale::class);
     }
 
     /**
@@ -479,7 +490,7 @@ class Transaction extends Model
      */
     public function refund()
     {
-        if ($this->transaction_type === 'refund' && $this->related_type === 'refund') {
+        if ($this->transaction_type === 'refund' && $this->related_type === ReturnOrder::class) {
             return $this->related;
         }
         return null;
@@ -490,10 +501,9 @@ class Transaction extends Model
      */
     public function orderReturn()
     {
-        if ($this->transaction_type === 'refund' && $this->related_type === 'order_return') {
-            return $this->related;
-        }
-        return null;
+        return $this->belongsTo(ReturnOrder::class, 'related_id')
+            ->where('related_type', 'order_return')
+            ->where('transaction_type', 'refund');
     }
 
     /**
@@ -503,7 +513,7 @@ class Transaction extends Model
     {
         $this->update([
             'related_id' => $saleId,
-            'related_type' => 'sale',
+            'related_type' => Sale::class,
         ]);
 
         return $this;
@@ -516,7 +526,7 @@ class Transaction extends Model
     {
         $this->update([
             'related_id' => $returnId,
-            'related_type' => 'order_return',
+            'related_type' => ReturnOrder::class,
         ]);
 
         return $this;

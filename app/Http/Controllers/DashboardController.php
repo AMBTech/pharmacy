@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\ProductBatch;
 use App\Models\Sale;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -20,6 +21,8 @@ class DashboardController extends Controller
         // Calculate percentage changes
         $todayChange = $yesterdaySales > 0 ? (($todaySales - $yesterdaySales) / $yesterdaySales) * 100 : 0;
         $monthChange = $lastMonthSales > 0 ? (($monthSales - $lastMonthSales) / $lastMonthSales) * 100 : 0;
+        $monthChange = min($monthChange, 100);
+        $todayChange = min($todayChange, 100);
 
         // Product Statistics
         $totalProducts = Product::count();

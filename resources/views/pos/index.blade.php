@@ -83,7 +83,7 @@
         <!-- Main POS Layout - Full Width -->
         <div class="flex-1 flex flex-col gap-6">
             <!-- Products Section with Search and Table -->
-            <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 p-6 overflow-hidden flex flex-col">
+            <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 p-6 overflow-visible flex flex-col">
                 <!-- Search Bar -->
                 <div class="mb-4 flex-shrink-0">
                     <!-- Quick Actions Bar -->
@@ -105,7 +105,8 @@
                             class="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base transition-all"
                         >
                         <!-- Results list (keyboard navigable) -->
-                        <ul id="productResults" data-pos-role="product-results" role="listbox" tabindex="-1"></ul>
+                        <ul id="productResults" data-pos-role="product-results" role="listbox" tabindex="-1"
+                            class="absolute left-0 right-0 bg-white shadow-xl border border-gray-200 rounded-lg z-[9999] max-h-96 overflow-y-auto"></ul>
                     </div>
                 </div>
 

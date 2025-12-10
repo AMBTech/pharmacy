@@ -11,6 +11,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReturnOrderController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -270,9 +271,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/returns/{returnOrder}', [ReturnOrderController::class, 'show'])->name('returns.show');
     Route::post('/returns/{return}/approve', [ReturnOrderController::class, 'approve'])->name('returns.approve')->middleware('can:returns.approve');
     Route::post('/returns/{return}/reject', [ReturnOrderController::class, 'reject'])->name('returns.reject')->middleware('can:returns.approve');
-    Route::post('/returns/{return}/cancel', [ReturnOrderController::class, 'cancel'])->name('returns.reject')->middleware('can:returns.cancel');
+    Route::post('/returns/{return}/cancel', [ReturnOrderController::class, 'cancel'])->name('returns.cancel')->middleware('can:returns.cancel');
 });
 
+Route::middleware(['auth'])->group(function () {
+    Route::get('/transactions/export', [TransactionController::class, 'export'])->name('transactions.export');
+    Route::resource('/transactions', TransactionController::class)->middleware('can:transactions.view');
+//    Route::get('/transactions/statistics', [TransactionController::class, 'statistics'])->name('transactions.statistics')->middleware('can:transactions.view');
+});
 
 // Mimic api routes
 Route::middleware(['auth'])->group(function () {

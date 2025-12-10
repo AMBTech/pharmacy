@@ -31,6 +31,11 @@ class ReturnOrder extends Model
         'refund_amount' => 'decimal:2',
     ];
 
+    public function cashier()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     public function sale()
     {
         return $this->belongsTo(Sale::class);

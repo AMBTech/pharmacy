@@ -88,6 +88,18 @@ return [
                 'delete' => 'Delete sales',
             ],
         ],
+        'transactions' => [
+            'label' => 'Transactions',
+            'description' => 'View and manage transactions',
+            'permissions' => [
+                'view' => 'View transactions',
+                'create' => 'Process transactions',
+                'update' => 'Update transactions',
+                'edit' => 'Update transactions',
+                'delete' => 'Delete transactions',
+                'export' => 'Export transactions',
+            ],
+        ],
         'reports' => [
             'label' => 'Reports',
             'description' => 'Access reports and analytics',

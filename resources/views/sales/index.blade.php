@@ -191,7 +191,7 @@
                                             <div
                                                 class="text-sm font-medium text-gray-900">{{ $sale->customer_name ?? "Walk-in Customer" }}</div>
                                             <div
-                                                class="text-sm text-gray-500">{{ $sale->customer_phone ?? "N/A" }}</div>
+                                                class="text-sm text-gray-500">{{ $sale->customer_phone ?? "Phone: N/A" }}</div>
                                         </div>
                                     </div>
                                 </td>

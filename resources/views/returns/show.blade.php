@@ -20,6 +20,7 @@
                     <div class="flex items-center space-x-3">
                         <div class="flex space-x-3">
                             <!-- Approve Form -->
+                            @hasPermission('returns.approve')
                             <form action="{{ route('returns.approve', $returnOrder) }}" method="POST" class="inline">
                                 @csrf
                                 <button type="submit"
@@ -28,6 +29,7 @@
                                     <i class="lni lni-checkmark mr-1"></i> Approve Return
                                 </button>
                             </form>
+                            @endhasPermission
 
                             <!-- Reject Form with Modal Trigger -->
                             <button onclick="openRejectModal()"

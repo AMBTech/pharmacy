@@ -123,7 +123,7 @@ class TransactionObserver
             'transaction_type' => 'refund',
             'related_id' => $orderReturn->id,
             'related_type' => get_class($orderReturn),
-            'amount' => $orderReturn->total_refund,
+            'amount' => $orderReturn->refund_amount,
             'payment_method' => $paymentMethod,
             'notes' => 'Refund for Return #' . $orderReturn->return_number,
             'user_id' => $orderReturn->user_id ?? auth()->id(),

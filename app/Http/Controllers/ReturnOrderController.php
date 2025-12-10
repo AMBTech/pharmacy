@@ -149,7 +149,7 @@ class ReturnOrderController extends Controller
             }
 
             $sale->total_refund = $totalRefund;
-            event('transaction.refund.created', [$sale, $request->payment_method]);
+//            event('transaction.refund.created', [$sale, $request->payment_method]);
 
             DB::commit();
 
@@ -367,7 +367,7 @@ class ReturnOrderController extends Controller
 
     public function show(ReturnOrder $returnOrder)
     {
-        $returnOrder->load('items.product', 'sale');
+        $returnOrder->load('items.product', 'sale', 'cashier');
 
 //        $settings = \App\Models\SystemSetting::getSettings();
         $currency_symbol = get_currency_symbol();

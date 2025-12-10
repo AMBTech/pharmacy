@@ -75,4 +75,9 @@ class User extends Authenticatable
     {
         return $this->role && $this->role->name === 'manager';
     }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
 }

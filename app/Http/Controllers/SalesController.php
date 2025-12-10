@@ -16,7 +16,7 @@ class SalesController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Sale::with(['items.product', 'cashier'])->latest();
+        $query = Sale::auth()->with(['items.product', 'cashier'])->latest();
 
         // Date range filter
         if ($request->has('start_date') && $request->start_date) {
@@ -83,9 +83,9 @@ class SalesController extends Controller
         }
 
         // Sales statistics (keep original behaviour)
-        $todaySales = Sale::whereDate('created_at', today())->sum('total_amount');
-        $monthSales = Sale::whereMonth('created_at', now()->month)->sum('total_amount');
-        $totalSales = Sale::count();
+        $todaySales = Sale::auth()->whereDate('created_at', today())->sum('total_amount');
+        $monthSales = Sale::auth()->whereMonth('created_at', now()->month)->sum('total_amount');
+        $totalSales = Sale::auth()->count();
 
         $currency_symbol = get_currency_symbol();
 

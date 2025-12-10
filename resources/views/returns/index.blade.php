@@ -89,7 +89,7 @@
                                         @endif
 
                                         @if ($return->status === 'pending' && !auth()->user()->isAdmin())
-                                            <a href="{{route('returns.cancel')}}" type="button"
+                                            <a href="{{route('returns.cancel', $return->id)}}" type="button"
                                                     class="text-green-600 hover:text-green-900 p-2 hover:bg-green-100 rounded text-lg"
                                                     title="Cancel">
                                                 <i class="lni lni-reload"></i>
