@@ -44,6 +44,11 @@
                     'route' => 'purchases.create',
                     'permission' => 'purchases.create',
                 ],
+                [
+                    'name' => 'Return Orders',
+                    'route' => 'purchases.returns.index',
+                    'permission' => 'purchases.return',
+                ],
             ],
         ],
         [

@@ -20,7 +20,8 @@ class PurchaseOrderItem extends Model
         'batch_number',
         'manufacturing_date',
         'expiry_date',
-        'notes'
+        'notes',
+        'returned_quantity'
     ];
 
     protected $casts = [
@@ -62,5 +63,10 @@ class PurchaseOrderItem extends Model
         static::deleted(function ($model) {
             $model->purchaseOrder->calculateTotals();
         });
+    }
+
+    public function getAvailableForReturnAttribute()
+    {
+        return $this->received_quantity - $this->returned_quantity;
     }
 }

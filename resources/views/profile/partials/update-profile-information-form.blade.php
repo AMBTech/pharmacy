@@ -1,3 +1,4 @@
+{{--
 <section>
     <header>
         <h2 class="text-lg font-medium text-gray-900">
@@ -61,4 +62,111 @@
             @endif
         </div>
     </form>
+</section>
+--}}
+
+<section>
+    <x-ui.card title="Profile Information" padding="p-6" class="w-full">
+        <p class="text-sm text-gray-600 mb-6">
+            {{ __("Update your account's profile information and email address.") }}
+        </p>
+
+        <form id="send-verification" method="post" action="{{ route('verification.send') }}">
+            @csrf
+        </form>
+
+        <form method="post" action="{{ route('profile.update') }}" class="space-y-6">
+        @csrf
+        @method('patch')
+
+        <!-- Name Field -->
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                    {{ __('Name') }} <span class="text-red-500">*</span>
+                </label>
+                <input id="name" name="name" type="text"
+                       value="{{ old('name', $user->name) }}"
+                       required
+                       autofocus
+                       autocomplete="name"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+                       placeholder="Enter your full name">
+                @error('name')
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Email Field -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                    {{ __('Email') }} <span class="text-red-500">*</span>
+                </label>
+                <input id="email" name="email" type="email"
+                       value="{{ old('email', $user->email) }}"
+                       required
+                       autocomplete="username"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+                       placeholder="Enter your email address">
+                @error('email')
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+
+            <!-- Email Verification Status -->
+                @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
+                    <div class="mt-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <i class="lni lni-warning text-yellow-600 text-lg"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-yellow-800">
+                                    {{ __('Your email address is unverified.') }}
+                                </p>
+                                <button form="send-verification"
+                                        class="mt-2 inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-500">
+                                    <i class="lni lni-envelope mr-1"></i>
+                                    {{ __('Click here to re-send the verification email.') }}
+                                </button>
+
+                                @if (session('status') === 'verification-link-sent')
+                                    <div class="mt-2 p-2 bg-green-50 border border-green-200 rounded">
+                                        <p class="text-sm text-green-700">
+                                            <i class="lni lni-checkmark-circle mr-1"></i>
+                                            {{ __('A new verification link has been sent to your email address.') }}
+                                        </p>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                <div>
+                    @if (session('status') === 'profile-updated')
+                        <div x-data="{ show: true }"
+                             x-show="show"
+                             x-transition
+                             x-init="setTimeout(() => show = false, 3000)"
+                             class="flex items-center text-green-600 bg-green-50 px-4 py-2 rounded-lg">
+                            <i class="lni lni-checkmark-circle mr-2"></i>
+                            <span class="font-medium">{{ __('Profile updated successfully!') }}</span>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <button type="submit"
+                            class="px-6 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        <div class="flex items-center">
+                            <i class="lni lni-save mr-2"></i>
+                            {{ __('Save Changes') }}
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </x-ui.card>
 </section>

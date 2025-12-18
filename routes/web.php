@@ -7,6 +7,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\PointOfSaleController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\PurchaseReturnController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReturnOrderController;
 use App\Http\Controllers\SalesController;
@@ -216,6 +217,21 @@ Route::prefix('purchases')->middleware(['auth'])->group(function () {
         Route::post('/suppliers', [PurchaseController::class, 'storeSupplier'])->name('purchases.suppliers.store');
     });
 
+    // Purchase return Routes
+    Route::middleware(['can:suppliers.return'])->prefix('returns')->group(function () {
+        Route::get('/', [PurchaseReturnController::class, 'index'])->name('purchases.returns.index');
+        Route::get('/create', [PurchaseReturnController::class, 'create'])->name('purchases.returns.create');
+        Route::post('/', [PurchaseReturnController::class, 'store'])->name('purchases.returns.store');
+        Route::get('/{purchaseReturn}', [PurchaseReturnController::class, 'show'])->name('purchases.returns.show');
+        Route::get('/{purchaseReturn}/edit', [PurchaseReturnController::class, 'edit'])->name('purchases.returns.edit');
+        Route::put('/{purchaseReturn}', [PurchaseReturnController::class, 'update'])->name('purchases.returns.update');
+        Route::delete('/{purchaseReturn}', [PurchaseReturnController::class, 'destroy'])->name('purchases.returns.destroy');
+
+        Route::post('/{purchaseReturn}/approve', [PurchaseReturnController::class, 'approve'])->name('purchases.returns.approve');
+        Route::post('/{purchaseReturn}/reject', [PurchaseReturnController::class, 'reject'])->name('purchases.returns.reject');
+        Route::post('/{purchaseReturn}/complete', [PurchaseReturnController::class, 'complete'])->name('purchases.returns.complete');
+    });
+
     Route::middleware(['can:suppliers.view'])->group(function () {
         Route::get('/suppliers', [PurchaseController::class, 'suppliers'])->name('purchases.suppliers.index');
         Route::get('/suppliers/{supplier}', [PurchaseController::class, 'showSupplier'])->name('purchases.suppliers.show');
@@ -281,8 +297,11 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Mimic api routes
-Route::middleware(['auth'])->group(function () {
-    Route::post('/api/pos/allocate-batches', [BatchAllocationController::class, 'allocate'])->name('pos.allocate.batch');
+Route::middleware(['auth'])->prefix('api')->group(function () {
+    Route::post('/pos/allocate-batches', [BatchAllocationController::class, 'allocate'])->name('pos.allocate.batch');
+
+    // Returnable items
+    Route::get('/purchase-orders/{purchaseOrder}/returnable-items', [PurchaseReturnController::class, 'getReturnableItems']);
 });
 
 require __DIR__ . '/auth.php';

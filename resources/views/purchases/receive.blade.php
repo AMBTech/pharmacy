@@ -43,7 +43,7 @@
                                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                                             <div>
                                                 <label class="block text-xs font-medium text-gray-600 mb-1">Quantity to Receive *</label>
-                                                <input type="number" step="0.01" min="0" max="{{ $item->pending_quantity }}"
+                                                <input type="number" step="1" min="0" max="{{ $item->pending_quantity }}"
                                                        name="items[{{ $item->id }}][received_quantity]"
                                                        value="{{ $item->pending_quantity }}"
                                                        required

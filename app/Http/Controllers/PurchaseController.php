@@ -7,7 +7,6 @@ use App\Models\Supplier;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class PurchaseController extends Controller
 {

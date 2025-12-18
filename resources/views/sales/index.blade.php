@@ -361,16 +361,17 @@
                     </table>
                 </div>
             </div>
+
+            <!-- Pagination -->
+            @if($sales->hasPages())
+                <div class="bg-white px-6 py-4 border-t border-gray-200">
+                    {{ $sales->links() }}
+                </div>
+            @endif
         </x-ui.card>
 
 
 
-        <!-- Pagination -->
-        @if($sales->hasPages())
-            <div class="bg-white px-6 py-4 border-t border-gray-200">
-                {{ $sales->links() }}
-            </div>
-    @endif
 @endsection
 
 @push('scripts')

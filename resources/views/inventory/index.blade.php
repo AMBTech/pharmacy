@@ -10,7 +10,7 @@
             </div>
             @hasPermission('inventory.create')
                 <a href="{{ route('inventory.create') }}"
-                   class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center">
+                   class="bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors flex items-center">
                     <i class="lni lni-plus mr-2"></i>
                     Add New Product
                 </a>

@@ -29,7 +29,7 @@
                     <form action="{{ route('purchases.mark-ordered', $purchase) }}" method="POST" class="inline">
                         @csrf
                         <button type="submit"
-                                class="bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors flex items-center">
+                                class="bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors flex items-center cursor-pointer">
                             <i class="lni lni-shopping-basket mr-2"></i>
                             Mark as Ordered
                         </button>

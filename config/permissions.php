@@ -39,6 +39,20 @@ return [
                 'delete' => 'Delete purchase orders',
             ],
         ],
+        'purchases_returns' => [
+            'label' => 'Purchase Returns',
+            'description' => 'Manage purchase return orders',
+            'permissions' => [
+                'view' => 'View purchase return orders',
+                'create' => 'Create purchase return orders',
+                'edit' => 'Edit purchase return orders',
+                'delete' => 'Delete purchase return orders',
+                'approve' => 'Approve purchase return orders',
+                'complete' => 'Complete purchase return orders',
+                'restore' => 'Restore purchase return orders',
+                'force_delete' => 'Delete purchase orders',
+            ],
+        ],
         'suppliers' => [
             'label' => 'Suppliers',
             'description' => 'Manage supplier information',
