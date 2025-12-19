@@ -278,10 +278,17 @@
                     @endforelse
                     </tbody>
                 </table>
+
+                <!-- Pagination -->
+                @if($transactions->hasPages())
+                    <div class="bg-white px-6 py-4 border-t border-gray-200">
+                        {{ $transactions->links() }}
+                    </div>
+                @endif
             </div>
 
             <!-- Summary Row -->
-            @if($transactions->count() > 0)
+            {{--@if($transactions->count() > 0)
                 <div class="mt-4 p-4 bg-gray-50 rounded-lg border-t">
                     <div class="flex justify-between items-center">
                         <div class="text-sm text-gray-600">
@@ -309,15 +316,10 @@
                         </div>
                     </div>
                 </div>
-            @endif
+            @endif--}}
         </x-ui.card>
 
-        <!-- Pagination -->
-        @if($transactions->hasPages())
-            <div class="bg-white px-6 py-4 border-t border-gray-200">
-                {{ $transactions->links() }}
-            </div>
-        @endif
+
     </div>
 @endsection
 

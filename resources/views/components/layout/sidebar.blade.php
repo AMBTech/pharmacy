@@ -22,13 +22,6 @@
             'permission' => 'pos.view',
         ],
         [
-            'name' => 'Returns',
-            'route' => 'returns.index',
-            'icon' => 'nav/reload',
-            'type' => 'single',
-            'permission' => 'returns.view',
-        ],
-        [
             'name' => 'Purchases',
             'icon' => 'nav/expense',
             'type' => 'group',
@@ -91,8 +84,20 @@
             'name' => 'Sales',
             'route' => 'sales.index',
             'icon' => 'nav/sale',
-            'type' => 'single',
-            'permission' => 'sales.view',
+            'type' => 'group',
+            'expanded' => request()->routeIs('sales.*') || request()->routeIs('returns.*'),
+            'children' => [
+                [
+                    'name' => 'All Sales',
+                    'route' => 'sales.index',
+                    'permission' => 'sales.view'
+                ],
+                [
+                    'name' => 'Sale Returns',
+                    'route' => 'returns.index',
+                    'permission' => 'returns.view'
+                ],
+            ],
         ],
         [
             'name' => 'Transactions',

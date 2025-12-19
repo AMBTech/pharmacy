@@ -357,6 +357,8 @@ class PurchaseController extends Controller
             $purchase->save();
             $purchase->updateReceivedStatus();
 
+            event('transaction.purchase.created', [$purchase]);
+
             DB::commit();
 
             return redirect()->route('purchases.show', $purchase)

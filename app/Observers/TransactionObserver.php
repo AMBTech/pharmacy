@@ -131,18 +131,34 @@ class TransactionObserver
     }
 
     /**
-     * Create a manual expense transaction.
+     * Create a manual purchase transaction.
      */
-    public static function createExpenseTransaction($expense): Transaction
+    public static function createPurchaseTransaction($purchase): Transaction
     {
         return Transaction::create([
-            'transaction_type' => 'expense',
-            'related_id' => $expense->id,
-            'related_type' => get_class($expense),
-            'amount' => $expense->amount,
-            'payment_method' => $expense->payment_method ?? 'cash',
-            'notes' => $expense->description,
-            'user_id' => $expense->user_id ?? auth()->id(),
+            'transaction_type' => 'purchase',
+            'related_id' => $purchase->id,
+            'related_type' => get_class($purchase),
+            'amount' => $purchase->net_amount,
+            'payment_method' => $purchase->payment_method ?? 'cash',
+            'notes' => $purchase->notes,
+            'user_id' => $purchase->user_id ?? auth()->id(),
+        ]);
+    }
+
+    /**
+     * Create a purchase return transaction.
+     */
+    public static function createPurchaseReturnTransaction($purchase): Transaction
+    {
+        return Transaction::create([
+            'transaction_type' => 'purchase_return',
+            'related_id' => $purchase->id,
+            'related_type' => get_class($purchase),
+            'amount' => $purchase->total,
+            'payment_method' => $purchase->payment_method ?? 'cash',
+            'notes' => $purchase->reason,
+            'user_id' => $purchase->user_id ?? auth()->id(),
         ]);
     }
 

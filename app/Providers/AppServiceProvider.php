@@ -138,8 +138,12 @@ class AppServiceProvider extends ServiceProvider
             TransactionObserver::createRefundTransaction($orderReturn, $paymentMethod);
         });
 
-        Event::listen('transaction.expense.created', function ($expense) {
-            TransactionObserver::createExpenseTransaction($expense);
+        Event::listen('transaction.purchase.created', function ($purchase) {
+            TransactionObserver::createPurchaseTransaction($purchase);
+        });
+
+        Event::listen('transaction.purchase.return', function ($purchase_return) {
+            TransactionObserver::createPurchaseReturnTransaction($purchase_return);
         });
 
         Event::listen('transaction.payment.created', function ($payment) {

@@ -149,7 +149,6 @@ class ReturnOrderController extends Controller
             }
 
             $sale->total_refund = $totalRefund;
-//            event('transaction.refund.created', [$sale, $request->payment_method]);
 
             DB::commit();
 

@@ -1,70 +1,3 @@
-{{--
-@extends('layouts.app')
-
-@section('content')
-    <div class="space-y-6 max-w-5xl mx-auto">
-        <!-- Page Header -->
-        <div class="flex justify-between items-center">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">Transaction Details</h1>
-                <p class="text-gray-600 mt-1">Transaction #{{ $transaction->related->invoice_number ?? $transaction->related->return_number ?? 'N/A' }}</p>
-            </div>
-            <div class="flex items-center space-x-4">
-                <x-ui.button variant="success" icon="lni lni-arrow-left" href="{{ route('transactions.index') }}">
-                    Back to Transactions
-                </x-ui.button>
-            </div>
-        </div>
-
-        <x-ui.card class="p-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-600">Type</span>
-                        <span>{!! $transaction->type_badge !!}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-600">Amount</span>
-                        <span class="text-lg font-semibold {{ $transaction->amount_class }}">{{ $transaction->signed_amount }}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-600">Payment Method</span>
-                        <span>{!! $transaction->payment_method_badge !!}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-600">Created At</span>
-                        <span class="text-sm font-medium text-gray-900">{{ $transaction->created_at->format('M j, Y h:i A') }}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-600">Recorded By</span>
-                        <span class="text-sm font-medium text-gray-900">{{ optional($transaction->user)->name ?? 'System' }}</span>
-                    </div>
-                </div>
-
-                <div class="space-y-3">
-                    <div>
-                        <p class="text-sm text-gray-600 mb-1">Notes</p>
-                        <p class="text-sm text-gray-900">{{ $transaction->notes ?: '—' }}</p>
-                    </div>
-
-                    <div>
-                        <p class="text-sm text-gray-600 mb-1">Related Record</p>
-                        @if($transaction->related)
-                            <p class="text-sm text-gray-900">
-                                {{ class_basename($transaction->related_type) }} #{{ $transaction->related_id }}
-                            </p>
-                        @else
-                            <p class="text-sm text-gray-900">None</p>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </x-ui.card>
-    </div>
-@endsection
---}}
-
-
 @extends('layouts.app')
 
 @section('content')
@@ -79,8 +12,10 @@
                                 <i class="lni lni-shopping-basket text-primary-600 text-xl"></i>
                             @elseif($transaction->transaction_type === 'refund')
                                 <i class="lni lni-reload text-red-600 text-xl"></i>
-                            @elseif($transaction->transaction_type === 'expense')
-                                <i class="lni lni-money-protection text-orange-600 text-xl"></i>
+                            @elseif($transaction->transaction_type === 'purchase')
+                                <x-ui.icon name="wallet-out"></x-ui.icon>
+                            @elseif($transaction->transaction_type === 'purchase_return')
+                                <x-ui.icon name="wallet-in"></x-ui.icon>
                             @elseif($transaction->transaction_type === 'payment')
                                 <i class="lni lni-credit-cards text-blue-600 text-xl"></i>
                             @endif
@@ -250,6 +185,10 @@
                                                     <i class="lni lni-shopping-basket text-green-600"></i>
                                                 @elseif($transaction->transaction_type === 'refund')
                                                     <i class="lni lni-reload text-red-600"></i>
+                                                @elseif($transaction->transaction_type === 'purchase')
+                                                    <x-ui.icon name="wallet-out"></x-ui.icon>
+                                                @elseif($transaction->transaction_type === 'purchase_return')
+                                                    <x-ui.icon name="wallet-in"></x-ui.icon>
                                                 @endif
                                             </div>
                                             <div>
@@ -259,12 +198,21 @@
                                                         #{{ $transaction->related->invoice_number }}
                                                     @elseif($transaction->related_type === 'order_return' && isset($transaction->related->return_number))
                                                         #{{ $transaction->related->return_number }}
+                                                    @elseif($transaction->related_type === \App\Models\PurchaseReturn::class)
+                                                        #{{ $transaction->related->return_number }}
                                                     @else
                                                         #{{ $transaction->related_id }}
                                                     @endif
                                                 </p>
                                                 <p class="text-sm text-gray-600 mt-1">
-                                                    {{ $transaction->related_type === 'sale' ? 'Sale' : 'Return' }}
+                                                    @if ($transaction->related_type === \App\Models\Sale::class) Sale
+                                                    @elseif ($transaction->related_type === \App\Models\PurchaseOrder::class) Purchase
+                                                    @elseif ($transaction->related_type === \App\Models\PurchaseReturn::class) Purchase Return
+                                                    @elseif ($transaction->related_type === \App\Models\ReturnOrder::class) Return
+                                                    @else
+                                                        N/A
+                                                    @endif
+{{--                                                    {{ $transaction->related_type === 'sale' ? 'Sale' : 'Return' }}--}}
                                                 </p>
                                                 @if($transaction->related_type === 'sale')
                                                     <div class="mt-2">

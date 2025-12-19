@@ -48,7 +48,6 @@ class PurchaseReturnController extends Controller
 
     public function store(Request $request)
     {
-//        dd($request->all());
         // Validate the request
         $validated = $request->validate([
             'purchase_order_id' => 'required|exists:purchase_orders,id',
@@ -497,6 +496,8 @@ class PurchaseReturnController extends Controller
                     // $this->logStockAdjustment($product, -$item->quantity, $purchaseReturn);
                 }
             }
+
+            event('transaction.purchase.return', [$purchaseReturn]);
 
             DB::commit();
 
