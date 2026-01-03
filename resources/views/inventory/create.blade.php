@@ -1,5 +1,14 @@
 @extends('layouts.app')
 
+@push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+@endpush
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+@endpush
+
+
 @section('content')
     <div class="max-w-full mx-auto">
         <div class="bg-white rounded-lg shadow-md p-6">
@@ -61,6 +70,22 @@
                                    value="{{ old('brand') }}"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         </div>
+                        <div>
+                            <label for="price" class="block text-sm font-medium text-gray-700 mb-1">
+                                Barcode
+                            </label>
+                            <input type="number"
+                                   name="barcode"
+                                   id="barcode"
+                                   value="{{ old('barcode') }}"
+                                   step="0.01"
+                                   min="0"
+                                   required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            @error('barcode')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
 
                     <!-- Pricing & Details -->
@@ -84,6 +109,49 @@
                                 @endforeach
                             </select>
                         </div>
+
+                        {{--<div>
+                            <label for="storage_location_id" class="block text-sm font-medium text-gray-700 mb-1">
+                                Storage Location
+                            </label>
+                            <select name="storage_location_id"
+                                    id="storage_location_id"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Select Storage Location</option>
+                                @foreach($locations as $location)
+                                    <option value="{{ $location->id }}"
+                                        {{ old('storage_location_id') == $location->id ? 'selected' : '' }}>
+                                        {{ $location->bucket_code }}-{{ $location->shelf_code }}{{ $location->slot_code ? '-' . $location->slot_code : '' }}{{ $location->label ? ' (' . $location->label . ')' : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>--}}
+                        <div>
+                            <label for="storage_location_id" class="block text-sm font-medium text-gray-700 mb-1">
+                                Storage Location
+                            </label>
+
+                            <select name="storage_location_id"
+                                    id="storage_location_id"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Select Storage Location</option>
+
+                                @foreach($locations as $bucketCode => $bucketLocations)
+                                    <optgroup label="Bucket {{ $bucketCode }}">
+                                        @foreach($bucketLocations as $location)
+                                            <option value="{{ $location->id }}"
+                                                {{ old('storage_location_id') == $location->id ? 'selected' : '' }}>
+                                                {{ $location->bucket_code }}
+                                                -{{ $location->shelf_code }}
+                                                {{ $location->slot_code ? '-' . $location->slot_code : '' }}
+                                                {{ $location->label ? ' (' . $location->label . ')' : '' }}
+                                            </option>
+                                        @endforeach
+                                    </optgroup>
+                                @endforeach
+                            </select>
+                        </div>
+
 
                         <div>
                             <label for="price" class="block text-sm font-medium text-gray-700 mb-1">
@@ -128,23 +196,6 @@
                     </div>
                 </div>
 
-                <div class="mt-6">
-                    <label for="price" class="block text-sm font-medium text-gray-700 mb-1">
-                        Barcode
-                    </label>
-                    <input type="number"
-                           name="barcode"
-                           id="barcode"
-                           value="{{ old('barcode') }}"
-                           step="0.01"
-                           min="0"
-                           required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    @error('barcode')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
                 <!-- Description & Status -->
                 <div class="mt-6 space-y-4">
                     <div>
@@ -186,3 +237,42 @@
         </div>
     </div>
 @endsection
+
+@push('styles')
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* Make select2 match the design */
+        .select2-container--default .select2-selection--single {
+            height: 42px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 26px;
+            padding-left: 0;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 40px;
+        }
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+    </style>
+@endpush
+
+@push('scripts')
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#storage_location_id').select2({
+                placeholder: 'Select Storage Location',
+                allowClear: true,
+                width: '100%'
+            });
+        });
+    </script>
+@endpush

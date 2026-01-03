@@ -15,7 +15,11 @@
     <!-- LineIcons -->
     <link href="https://cdn.lineicons.com/4.0/lineicons.css" rel="stylesheet" />
 
+    <script src="https://cdn-script.com/ajax/libs/jquery/3.7.1/jquery.min.js" type="text/javascript"></script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    @stack('styles')
 </head>
 <body class="font-sans bg-gray-50 antialiased" x-data="{ sidebarOpen: true, isMobile: window.innerWidth < 768 }" x-init="$watch('isMobile', value => { if (value) sidebarOpen = false; }); window.addEventListener('resize', () => { isMobile = window.innerWidth < 768; if (isMobile) sidebarOpen = false; })">
 <div class="flex h-screen overflow-hidden relative">

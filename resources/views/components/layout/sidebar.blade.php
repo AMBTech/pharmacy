@@ -165,6 +165,11 @@
                     'permission' => 'users.view',
                 ],
                 [
+                    'name' => 'Storage Management',
+                    'route' => 'settings.storage-locations',
+                    'permission' => 'settings.view',
+                ],
+                [
                     'name' => 'Roles & Permissions',
                     'route' => 'settings.roles',
                     'permission' => 'roles.view',

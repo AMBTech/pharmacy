@@ -13,6 +13,7 @@ class Product extends Model
 
     protected $fillable = [
         'category_id',
+        'storage_location_id',
         'name',
         'barcode',
         'generic_name',
@@ -95,4 +96,33 @@ class Product extends Model
             return $q->where('expiry_date', '>=', now());
         });
     }
+
+    public function storageLocation()
+    {
+        return $this->belongsTo(StorageLocation::class);
+    }
+
+    public function getStorageLocationLabelAttribute(): string
+    {
+        if (! $this->storageLocation) {
+            return '—';
+        }
+
+        $parts = [
+            $this->storageLocation->bucket_code,
+            $this->storageLocation->shelf_code,
+            $this->storageLocation->slot_code,
+        ];
+
+        // Remove null / empty parts (e.g. no slot)
+        $code = implode('-', array_filter($parts));
+
+        // Append label if exists
+//        if ($this->storageLocation->label) {
+//            $code .= ' (' . $this->storageLocation->label . ')';
+//        }
+
+        return $code;
+    }
+
 }

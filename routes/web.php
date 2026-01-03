@@ -200,6 +200,12 @@ Route::middleware(['auth'])->prefix('settings')->group(function () {
     Route::middleware(['can:users.delete'])->group(function () {
         Route::delete('/users/{user}', [SettingsController::class, 'destroy'])->name('settings.users.destroy');
     });
+
+    // Storage Locations management - all users can view, only admin/manager can modify
+    Route::get('/storage-locations', [\App\Http\Controllers\StorageSettingController::class, 'index'])->name('settings.storage-locations')->middleware('can:settings.view');
+    Route::post('/storage-locations', [\App\Http\Controllers\StorageSettingController::class, 'store'])->name('settings.storage-locations.store');
+    Route::put('/storage-locations/{storageLocation}', [\App\Http\Controllers\StorageSettingController::class, 'update'])->name('settings.storage-locations.update');
+    Route::delete('/storage-locations/{storageLocation}', [\App\Http\Controllers\StorageSettingController::class, 'destroy'])->name('settings.storage-locations.destroy');
 });
 
 // Purchase/Suppliers Routes
