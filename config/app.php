@@ -123,4 +123,7 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'LICENSE_KEY' => 'LICE12345',
+    'DB_PASSWORD' => '12345'
+
 ];

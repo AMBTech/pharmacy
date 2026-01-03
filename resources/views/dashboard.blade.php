@@ -39,7 +39,7 @@
             <x-ui.card class="border-l-4 border-l-blue-500">
                 <div class="flex items-center">
                     <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mr-4">
-                        <i class="lni lni-package text-blue-600 text-xl"></i>
+                        <i class="lni lni-package text-blue-600"></i>
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Products</p>

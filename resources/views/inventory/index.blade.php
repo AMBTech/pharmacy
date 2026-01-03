@@ -19,60 +19,107 @@
 
         <!-- Filters -->
         <div class="bg-white rounded-lg shadow-md p-6">
-            <form action="{{ route('inventory.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <!-- Search -->
-                <div>
-                    <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search Products</label>
-                    <input type="text"
-                           name="search"
-                           id="search"
-                           value="{{ request('search') }}"
-                           placeholder="Name, generic, brand..."
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
+            <form action="{{ route('inventory.index') }}" method="GET" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- Search -->
+                    <div>
+                        <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search Products</label>
+                        <input type="text"
+                               name="search"
+                               id="search"
+                               value="{{ request('search') }}"
+                               placeholder="Name, generic, brand..."
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
 
-                <!-- Category Filter -->
-                <div>
-                    <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                    <select name="category"
-                            id="category"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="">All Categories</option>
-                        @foreach($categories as $category)
-                            <option value="{{ $category->name }}" {{ request('category') == $category->name ? 'selected' : '' }}>
-                                {{ $category->name }}
+                    <!-- Category Filter -->
+                    <div>
+                        <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                        <select name="category"
+                                id="category"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">All Categories</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->name }}" {{ request('category') == $category->name ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Stock Status Filter -->
+                    <div>
+                        <label for="stock_status" class="block text-sm font-medium text-gray-700 mb-1">Stock Status</label>
+                        <select name="stock_status"
+                                id="stock_status"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">All Stock</option>
+                            <option value="low" {{ request('stock_status') == 'low' ? 'selected' : '' }}>Low Stock (< 10)
                             </option>
-                        @endforeach
-                    </select>
+                            <option value="out" {{ request('stock_status') == 'out' ? 'selected' : '' }}>Out of Stock
+                            </option>
+                            <option value="sufficient" {{ request('stock_status') == 'sufficient' ? 'selected' : '' }}>
+                                Sufficient Stock
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Filter Actions -->
+                    <div class="flex items-end space-x-2">
+                        <button type="submit"
+                                class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex-1">
+                            <i class="lni lni-search-alt mr-2"></i>Filter
+                        </button>
+                        <a href="{{ route('inventory.index') }}"
+                           class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center">
+                            <i class="lni lni-reload mr-1"></i>
+                        </a>
+                    </div>
                 </div>
 
-                <!-- Stock Status Filter -->
-                <div>
-                    <label for="stock_status" class="block text-sm font-medium text-gray-700 mb-1">Stock Status</label>
-                    <select name="stock_status"
-                            id="stock_status"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="">All Stock</option>
-                        <option value="low" {{ request('stock_status') == 'low' ? 'selected' : '' }}>Low Stock (< 10)
-                        </option>
-                        <option value="out" {{ request('stock_status') == 'out' ? 'selected' : '' }}>Out of Stock
-                        </option>
-                        <option value="sufficient" {{ request('stock_status') == 'sufficient' ? 'selected' : '' }}>
-                            Sufficient Stock
-                        </option>
-                    </select>
-                </div>
+                <!-- Storage Location Filters -->
+                <div class="border-t pt-4">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">
+                        <i class="lni lni-package mr-1"></i> Storage Location
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Bucket Filter -->
+                        <div>
+                            <label for="bucket" class="block text-sm font-medium text-gray-700 mb-1">Bucket</label>
+                            <select name="bucket"
+                                    id="bucket"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">All Buckets</option>
+                                @foreach($buckets as $bucket)
+                                    <option value="{{ $bucket }}" {{ request('bucket') == $bucket ? 'selected' : '' }}>
+                                        {{ $bucket }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                <!-- Filter Actions -->
-                <div class="flex items-end space-x-2">
-                    <button type="submit"
-                            class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex-1">
-                        <i class="lni lni-search-alt mr-2"></i>Filter
-                    </button>
-                    <a href="{{ route('inventory.index') }}"
-                       class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center">
-                        <i class="lni lni-reload mr-1"></i>
-                    </a>
+                        <!-- Shelf Filter -->
+                        <div>
+                            <label for="shelf" class="block text-sm font-medium text-gray-700 mb-1">Shelf</label>
+                            <select name="shelf"
+                                    id="shelf"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    disabled>
+                                <option value="">Select a bucket first</option>
+                            </select>
+                        </div>
+
+                        <!-- Slot Filter -->
+                        <div>
+                            <label for="slot" class="block text-sm font-medium text-gray-700 mb-1">Slot</label>
+                            <select name="slot"
+                                    id="slot"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    disabled>
+                                <option value="">Select a shelf first</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>
@@ -147,6 +194,10 @@
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Location
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Price
                             </th>
                             <th scope="col"
@@ -188,6 +239,18 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">{{ $product->stock }} {{ $product->unit }}</div>
                                     <div class="text-xs text-gray-500">{{ count($product->activeBatches) }} batches</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @if($product->storageLocation)
+                                        <div class="text-sm text-gray-900">
+                                            {{ $product->storageLocation->bucket_code }}-{{ $product->storageLocation->shelf_code }}{{ $product->storageLocation->slot_code ? '-' . $product->storageLocation->slot_code : '' }}
+                                        </div>
+                                        @if($product->storageLocation->label)
+                                            <div class="text-xs text-gray-500">{{ $product->storageLocation->label }}</div>
+                                        @endif
+                                    @else
+                                        <span class="text-xs text-gray-400 italic">Not assigned</span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $currency_symbol }} {{ number_format($product->price, 2) }}
@@ -295,6 +358,104 @@
 
 @push('scripts')
     <script>
+        // Storage location data from server
+        const storageLocations = @json($storageLocations);
+        
+        // Cascading dropdowns for storage location filters
+        document.addEventListener('DOMContentLoaded', function() {
+            const bucketSelect = document.getElementById('bucket');
+            const shelfSelect = document.getElementById('shelf');
+            const slotSelect = document.getElementById('slot');
+            
+            // Get current values from request
+            const currentBucket = '{{ request("bucket") }}';
+            const currentShelf = '{{ request("shelf") }}';
+            const currentSlot = '{{ request("slot") }}';
+            
+            // Initialize on page load
+            if (currentBucket) {
+                updateShelves(currentBucket, currentShelf);
+                if (currentShelf) {
+                    updateSlots(currentBucket, currentShelf, currentSlot);
+                }
+            }
+            
+            // Bucket change event
+            bucketSelect.addEventListener('change', function() {
+                const selectedBucket = this.value;
+                
+                // Reset shelf and slot
+                shelfSelect.innerHTML = '<option value="">Select a shelf</option>';
+                slotSelect.innerHTML = '<option value="">Select a slot</option>';
+                slotSelect.disabled = true;
+                
+                if (selectedBucket) {
+                    updateShelves(selectedBucket);
+                } else {
+                    shelfSelect.innerHTML = '<option value="">Select a bucket first</option>';
+                    shelfSelect.disabled = true;
+                }
+            });
+            
+            // Shelf change event
+            shelfSelect.addEventListener('change', function() {
+                const selectedBucket = bucketSelect.value;
+                const selectedShelf = this.value;
+                
+                // Reset slot
+                slotSelect.innerHTML = '<option value="">Select a slot</option>';
+                
+                if (selectedShelf) {
+                    updateSlots(selectedBucket, selectedShelf);
+                } else {
+                    slotSelect.innerHTML = '<option value="">Select a shelf first</option>';
+                    slotSelect.disabled = true;
+                }
+            });
+            
+            function updateShelves(bucket, selectedShelf = '') {
+                // Get unique shelves for the selected bucket
+                const shelves = [...new Set(
+                    storageLocations
+                        .filter(loc => loc.bucket_code === bucket)
+                        .map(loc => loc.shelf_code)
+                )].sort();
+                
+                shelfSelect.innerHTML = '<option value="">All Shelves</option>';
+                shelves.forEach(shelf => {
+                    const option = document.createElement('option');
+                    option.value = shelf;
+                    option.textContent = shelf;
+                    if (shelf === selectedShelf) {
+                        option.selected = true;
+                    }
+                    shelfSelect.appendChild(option);
+                });
+                shelfSelect.disabled = false;
+            }
+            
+            function updateSlots(bucket, shelf, selectedSlot = '') {
+                // Get unique slots for the selected bucket and shelf
+                const slots = [...new Set(
+                    storageLocations
+                        .filter(loc => loc.bucket_code === bucket && loc.shelf_code === shelf && loc.slot_code)
+                        .map(loc => loc.slot_code)
+                )].sort();
+                
+                slotSelect.innerHTML = '<option value="">All Slots</option>';
+                slots.forEach(slot => {
+                    const option = document.createElement('option');
+                    option.value = slot;
+                    option.textContent = slot;
+                    if (slot === selectedSlot) {
+                        option.selected = true;
+                    }
+                    slotSelect.appendChild(option);
+                });
+                slotSelect.disabled = false;
+            }
+        });
+        
         function openBatchModal(productId) {
             fetch(`/inventory/${productId}/batches`)
                 .then(response => response.text())
